@@ -1,2 +1,11 @@
-html{background-color:black;font-family:'Rubik';font-size:20px}
-body{margin:0}
+html{font-family:'Rubik',sans-serif;font-size:20px}
+body{background-color:black;margin:0}
+.bg-blue1{background-color:#00a2e1}
+.bg-blue2{background-color:#005ec4}
+.bg-blue3{background-color:#010733}
+.blue1{color:#00a2e1}
+.blue2{color:#005ec4}
+.blue3{color:#010733}
+.white{color:white}
+.font30{font-size:30px}
+.fullwidth{width:100%}
