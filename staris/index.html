@@ -19,7 +19,8 @@ body{font-family:'Rubik';font-size:20px;background-color:black}
 <div id="settings">
 <input id="textinput">
 <select id="direction">
-<option value="0">Select Scrolling Direction</option>
+<option value="0">Stays in middle at all times</option>
+<option value="L_R">From left scroll to right</option>
 <option value="L_M">From left, stops at middle</option>
 <option value="R_M">From right, stops at middle</option>
 <option value="R_L">From right scroll to left</option>
@@ -96,10 +97,46 @@ var data = { // URL, width, height, left, top
     "0":["url('font002.png')",48,78,432,235.5],
 }
 var isScrolling
-document.getElementById("submit").addEventListener("click",function(){
+var target = document.getElementById("output");
+document.getElementById("submit").addEventListener("click",function(){convert(document.getElementById("textinput").value)})
+
+function tween(width){
+    switch (document.getElementById("direction").value){
+        case "L_R":
+            var pos = -width
+            isScrolling = setInterval(function(){
+                if (pos > 1100){clearInterval(isScrolling)}
+                else {pos = pos + 6;target.style.left = pos + "px"}},15);
+            break;
+        case "L_M":
+            var pos = width/-2
+            target.style.marginLeft = "-" + width/2 + "px";
+            target.style.left = "-" + width/2 + "px";
+            isScrolling = setInterval(function(){
+                if (pos > 550){clearInterval(isScrolling)}
+                else {pos = pos + 6;target.style.left = pos + "px"}},15);
+            break;
+        case "R_L":
+            var pos = 1100
+            isScrolling = setInterval(function(){
+                if (pos < -width){clearInterval(isScrolling)}
+                else {pos = pos-6;target.style.left = pos + "px"}},15);
+            break;
+        case "R_M":
+            var pos = 1100 + width/2
+            target.style.marginLeft = "-" + width/2 + "px";
+            isScrolling = setInterval(function(){
+                if (pos < 550){clearInterval(isScrolling)}
+                else {pos = pos - 6;target.style.left = pos + "px"}},15);
+            break;
+        default:
+            target.style.marginLeft = "-" + width/2 + "px";
+            target.style.left = "50%";
+            break;
+    }
+}
+function convert(text){
     clearInterval(isScrolling);
-    var text = document.getElementById("textinput").value;
-    var target = document.getElementById("output");
     var width = 0;
     target.innerHTML = "";
     target.left = "1100px";
@@ -115,16 +152,8 @@ document.getElementById("submit").addEventListener("click",function(){
             target.appendChild(img);}}
     target.style.width = width + "px";
     target.style.marginLeft = "";
-    if (width > 1100){
-    var pos = 1100;
-    isScrolling = setInterval(frame, 15);
-    function frame(){
-        if (pos == width*-1){clearInterval(isScrolling)}
-        else{pos=pos-6;target.style.left = pos + "px"}
-    }}
-    else{target.style.marginLeft = "-" + width/2 + "px";target.style.left = "50%";}
-})
-
+    tween(width)
+}
 </script>
 </body>
 </html>
