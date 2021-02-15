@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>STARIS Simulator</title>
+<link rel="shortcut icon" href="icon.svg" />
+<style>
+body{font-family:'Rubik';font-size:20px;background-color:black}
+#settings *{display:inline-block;position:relative;background-color:white;color:black;outline:0;border:0;height:100%}
+#submit{background-color:#005ec4;color:white;border-radius:5px;width:10%;text-align:center;cursor:pointer;padding:2px 0}
+#direction{font-family:'Rubik';font-size:20px;width:25%}
+#textinput{font-family:'Rubik';font-size:20px;width:60%}
+#output-frame{background:url("bg-image.png") 0px 0px/1212px 131px no-repeat;width:1212px;height:131px;position:relative;top:50px;z-index:15}
+#output-bg{background-color:black;width:1100px;height:78px;overflow:hidden;z-index:10;position:absolute;top:113px;left:65px}
+#output{height:78px;position:absolute}
+.char{float:left;position:static}
+</style>
+</head>
+<body>
+<div id="settings">
+<input id="textinput">
+<select id="direction">
+<option value="0">Select Scrolling Direction</option>
+<option value="L_M">From left, stops at middle</option>
+<option value="R_M">From right, stops at middle</option>
+<option value="R_L">From right scroll to left</option>
+</select>
+<div id="submit">Submit</div>
+</div>
+<div id="output-frame"></div>
+<div id="output-bg"><div id="output">
+    <div style="background:url('font001.png') 0px 0px/477px 396px no-repeat black;width:48px;height:71px;float:left"></div>
+</div></div>
+<script src="../start.js"></script>
+<script>
+var data = { // URL, width, height, left, top
+    A:["url('font001.png')",48,78,0,0],
+    B:["url('font001.png')",48,78,48,0],
+    C:["url('font001.png')",48,78,96,0],
+    D:["url('font001.png')",48,78,144,0],
+    E:["url('font001.png')",48,78,192,0],
+    F:["url('font001.png')",48,78,240,0],
+    G:["url('font001.png')",48,78,288,0],
+    H:["url('font001.png')",48,78,336,0],
+    I:["url('font001.png')",48,78,384,0],
+    J:["url('font001.png')",48,78,432,0],
+    K:["url('font001.png')",48,78,0,79.5],
+    L:["url('font001.png')",48,78,48,79.5],
+    M:["url('font001.png')",48,78,96,79.5],
+    N:["url('font001.png')",48,78,144,79.5],
+    O:["url('font001.png')",48,78,192,79.5],
+    P:["url('font001.png')",48,78,240,79.5],
+    Q:["url('font001.png')",48,78,288,79.5],
+    R:["url('font001.png')",48,78,336,79.5],
+    S:["url('font001.png')",48,78,384,79.5],
+    T:["url('font001.png')",48,78,432,79.5],
+    U:["url('font001.png')",48,78,0,159.5],
+    V:["url('font001.png')",48,78,48,159.5],
+    W:["url('font001.png')",48,78,96,159.5],
+    X:["url('font001.png')",48,78,144,159.5],
+    Y:["url('font001.png')",48,78,192,159.5],
+    Z:["url('font001.png')",48,78,240,159.5],
+    a:["url('font002.png')",48,78,0,0],
+    b:["url('font002.png')",48,78,48,0],
+    c:["url('font002.png')",48,78,96,0],
+    d:["url('font002.png')",48,78,144,0],
+    e:["url('font002.png')",48,78,192,0],
+    f:["url('font002.png')",48,78,240,0],
+    g:["url('font002.png')",48,78,288,0],
+    h:["url('font002.png')",48,78,336,0],
+    i:["url('font002.png')",48,78,384,0],
+    j:["url('font002.png')",48,78,432,0],
+    k:["url('font002.png')",48,78,0,77.5],
+    l:["url('font002.png')",48,78,48,77.5],
+    m:["url('font002.png')",48,78,96,77.5],
+    n:["url('font002.png')",48,78,144,77.5],
+    o:["url('font002.png')",48,78,192,77.5],
+    p:["url('font002.png')",48,78,240,77.5],
+    q:["url('font002.png')",48,78,288,77.5],
+    r:["url('font002.png')",48,78,336,77.5],
+    s:["url('font002.png')",48,78,384,77.5],
+    t:["url('font002.png')",48,78,432,77.5],
+    u:["url('font002.png')",48,78,0,157],
+    v:["url('font002.png')",48,78,48,157],
+    w:["url('font002.png')",48,78,96,157],
+    x:["url('font002.png')",48,78,144,157],
+    y:["url('font002.png')",48,78,192,157],
+    z:["url('font002.png')",48,78,240,157],
+    " ":["url('font001.png')",48,78,-9000,0],
+    "1":["url('font002.png')",48,78,0,235.5],
+    "2":["url('font002.png')",48,78,48,235.5],
+    "3":["url('font002.png')",48,78,96,235.5],
+    "4":["url('font002.png')",48,78,144,235.5],
+    "5":["url('font002.png')",48,78,192,235.5],
+    "6":["url('font002.png')",48,78,240,235.5],
+    "7":["url('font002.png')",48,78,288,235.5],
+    "8":["url('font002.png')",48,78,336,235.5],
+    "9":["url('font002.png')",48,78,384,235.5],
+    "0":["url('font002.png')",48,78,432,235.5],
+}
+var isScrolling
+document.getElementById("submit").addEventListener("click",function(){
+    clearInterval(isScrolling);
+    var text = document.getElementById("textinput").value;
+    var target = document.getElementById("output");
+    var width = 0;
+    target.innerHTML = "";
+    for (char of text){
+        var item = data[char];
+        if (item){
+            var img = document.createElement("div");
+            img.style.background = item[0] + " -" + item[3] + "px -" + item[4] + "px/477px 390px no-repeat black";
+            img.classList.add("char");
+            img.style.width = item[1] + "px";
+            img.style.height = item[2] + "px";
+            width = width + item[1];
+            target.appendChild(img);}}
+    target.style.width = width + "px";
+    target.style.marginLeft = "";
+    if (width > 1100){
+    var pos = 1100;
+    isScrolling = setInterval(frame, 15);
+    function frame(){
+        if (pos == width*-1){clearInterval(isScrolling)}
+        else{pos=pos-6;target.style.left = pos + "px"}
+    }}
+    else{target.style.marginLeft = "-" + width/2 + "px";target.style.left = "50%";}
+})
+
+</script>
+</body>
+</html>
