@@ -1,5 +1,5 @@
 // Website icon
-var host = "destsigns.github.io/";
+var host = "https://destsigns.github.io/";
 var icon = host + "logo.svg"
 var link = document.createElement("link");link.rel = "shortcut icon";document.head.appendChild(link);link.href = icon;
 var font = document.createElement("link");font.rel = "stylesheet";document.head.appendChild(font);font.href = "https://fonts.googleapis.com/css?family=Rubik";
