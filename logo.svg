@@ -1,0 +1,33 @@
+<svg width="200" height="200" viewBox="0 0 266 266" xmlns="http://www.w3.org/2000/svg">
+<g style="fill:orange;stroke-width:0">
+    <circle r="12" cx="14" cy="43"/>
+    <circle r="12" cx="44" cy="43"/>
+    <circle r="12" cx="74" cy="43"/>
+    <circle r="12" cx="104" cy="73"/>
+    <circle r="12" cx="104" cy="103"/>
+    <circle r="12" cx="104" cy="133"/>
+    <circle r="12" cx="104" cy="163"/>
+    <circle r="12" cx="104" cy="193"/>
+    <circle r="12" cx="74" cy="223"/>
+    <circle r="12" cx="44" cy="223"/>
+    <circle r="12" cx="14" cy="223"/>
+    <circle r="12" cx="14" cy="193"/>
+    <circle r="12" cx="14" cy="163"/>
+    <circle r="12" cx="14" cy="133"/>
+    <circle r="12" cx="14" cy="103"/>
+    <circle r="12" cx="14" cy="73"/>
+
+    <circle r="12" cx="254" cy="73"/>
+    <circle r="12" cx="224" cy="43"/>
+    <circle r="12" cx="194" cy="43"/>
+    <circle r="12" cx="164" cy="73"/>
+    <circle r="12" cx="164" cy="103"/>
+    <circle r="12" cx="194" cy="133"/>
+    <circle r="12" cx="224" cy="133"/>
+    <circle r="12" cx="254" cy="163"/>
+    <circle r="12" cx="254" cy="193"/>
+    <circle r="12" cx="224" cy="223"/>
+    <circle r="12" cx="194" cy="223"/>
+    <circle r="12" cx="164" cy="193"/>
+</g>
+</svg>

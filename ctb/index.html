@@ -1,0 +1,511 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>CTB LECIP Stop Reporter</title>
+<link rel="shortcut icon" href="icon.png" />
+<style>
+html,body{margin:0;padding:10px;font-family:sans-serif;background-color:#867e71;overflow:hidden}
+dt{font-size:20px;color:white}
+dl dd{position:relative;height:100%;margin:-30px 5px 5px 200px;padding:5px 0px;width:40%}
+input,select{width:100%;font-size:20px;border:0;margin:0;outline:0}
+input:focus{background-color:#ccc}
+#submit{background-color:yellow;border-radius:10px;font-size:35px;padding:40px 10%;cursor:pointer;float:right;margin-top:-135px}
+#display{width:100%;height:140px}
+#display *{position:absolute}
+#display .char{position:static;float:left;height:97px;filter:invert(98%) sepia(99%) saturate(1852%) hue-rotate(319deg) brightness(101%) contrast(101%)}
+#frame{background:url("frame.png") top left/1025px 137px no-repeat;width:1025px;height:137px;margin-left:-512px;left:50%}
+#display #bg{background-color:black;width:865px;height:100px;top:20px;position:relative;margin-left:-432px;left:50%}
+#target,#previous{width:865px;height:97px;top:230px;position:fixed}
+#display .cover{height:100px;width:200px;background-color:#867e71;top:230px}
+#frameL{left:0} #frameR{right:0}
+</style>
+</head>
+<body>
+<dl><dt>Status</dt><dd><select id="status">
+    <option value="0">Not arrived</option>
+    <option value="1">Arrived</option>
+    <option value="2">Information</option>
+    <option value="3">Announcement</option>
+    </select></dd>
+<dt>Stop number</dt><dd><input id="stopnum"></dd>
+<dt>Chinese stop name</dt><dd><input id="inputchi"></dd>
+<dt>Additional info</dt><dd><input id="inputinfo"></dd>
+<dt>English stop name</dt><dd><input id="inputeng"></dd>
+<div id="submit">Submit</div>
+</dl>
+<div id="display">
+<div style="z-index:10" id="frame"></div>
+<div style="z-index:1" id="bg"></div>
+<div style="z-index:5" id="target"></div>
+<div style="z-index:10" id="frameL" class="cover"></div>
+<div style="z-index:10" id="frameR" class="cover"></div>
+</div>
+<script>
+var stopped = true
+var prevFrame,engtochi,previous,prevLeft
+document.getElementById("inputchi").value = "";
+document.getElementById("inputeng").value = "";
+var listChi = {
+    [encodeURIComponent("@")]:["url('font1001.png')",180,"967px 505px","0 0"],
+    [encodeURIComponent("$")]:["url('font1001.png')",66,"967px 505px","180px 0px"],
+    [encodeURIComponent("^")]:["url('font1001.png')",126,"967px 505px","246px 0px"],
+    [encodeURIComponent("&")]:["url('font1001.png')",108,"967px 505px","445px 0px"],
+    [encodeURIComponent("!")]:["url('font1001.png')",108,"967px 505px","553px 0px"],
+    [encodeURIComponent("+")]:["url('font1001.png')",78,"967px 505px","661px 0px"],
+    [encodeURIComponent("-")]:["url('font1001.png')",78,"0 0","0 0"],
+    [encodeURIComponent("，")]:["url('font1001.png')",30,"967px 505px","877px 0px"],
+    [encodeURIComponent("。")]:["url('font1001.png')",36,"967px 505px","907px 0px"],
+    [encodeURIComponent("、")]:["url('font1001.png')",30,"967px 505px","937px 0px"],
+    [encodeURIComponent("*")]:["url('font0003.png')",180,"1051px 811px","865px -715px"],
+    [encodeURIComponent("D")]:["url('font1001.png')",66,"967px 505px","330px -198px"],
+    [encodeURIComponent("H")]:["url('font1001.png')",60,"967px 505px","580px -198px"],
+    [encodeURIComponent("L")]:["url('font1001.png')",48,"967px 505px","780px -198px"],
+    [encodeURIComponent("1")]:["url('font1001.png')",36,"967px 505px","0px -402px"],
+    [encodeURIComponent("2")]:["url('font1001.png')",60,"967px 505px","36px -402px"],
+    [encodeURIComponent("3")]:["url('font1001.png')",60,"967px 505px","96px -402px"],
+    [encodeURIComponent("4")]:["url('font1001.png')",66,"967px 505px","156px -402px"],
+    [encodeURIComponent("5")]:["url('font1001.png')",60,"967px 505px","222px -402px"],
+    [encodeURIComponent("6")]:["url('font1001.png')",60,"967px 505px","282px -402px"],
+    [encodeURIComponent("7")]:["url('font1001.png')",60,"967px 505px","342px -402px"],
+    [encodeURIComponent("8")]:["url('font1001.png')",60,"967px 505px","402px -402px"],
+    [encodeURIComponent("9")]:["url('font1001.png')",60,"967px 505px","462px -402px"],
+    [encodeURIComponent("0")]:["url('font1001.png')",60,"967px 505px","522px -402px"],
+    [encodeURIComponent(".")]:["url('font1001.png')",18,"967px 505px","582px -402px"],
+    [encodeURIComponent("祥")]:["url('font0001.png')",96,"1051px 811px","0px 0px"],
+    [encodeURIComponent("和")]:["url('font0001.png')",96,"1051px 811px","96px 0px"],
+    [encodeURIComponent("苑")]:["url('font0001.png')",96,"1051px 811px","192px 0px"],
+    [encodeURIComponent("秀")]:["url('font0001.png')",96,"1051px 811px","288px 0px"],
+    [encodeURIComponent("茂")]:["url('font0001.png')",96,"1051px 811px","384px 0px"],
+    [encodeURIComponent("坪")]:["url('font0001.png')",96,"1051px 811px","480px 0px"],
+    [encodeURIComponent("邨")]:["url('font0001.png')",96,"1051px 811px","576px 0px"],
+    [encodeURIComponent("程")]:["url('font0001.png')",96,"1051px 811px","672px 0px"],
+    [encodeURIComponent("樓")]:["url('font0001.png')",96,"1051px 811px","768px 0px"],
+    [encodeURIComponent("同")]:["url('font0001.png')",96,"1051px 811px","864px 0px"],
+    [encodeURIComponent("仁")]:["url('font0001.png')",96,"1051px 811px","960px 0px"],
+    [encodeURIComponent("街")]:["url('font0001.png')",96,"1051px 811px","0px -102px"],
+    [encodeURIComponent("觀")]:["url('font0001.png')",96,"1051px 811px","96px -102px"],
+    [encodeURIComponent("塘")]:["url('font0001.png')",96,"1051px 811px","192px -102px"],
+    [encodeURIComponent("官")]:["url('font0001.png')",96,"1051px 811px","288px -102px"],
+    [encodeURIComponent("立")]:["url('font0001.png')",96,"1051px 811px","384px -102px"],
+    [encodeURIComponent("小")]:["url('font0001.png')",96,"1051px 811px","480px -102px"],
+    [encodeURIComponent("學")]:["url('font0001.png')",96,"1051px 811px","576px -102px"],
+    [encodeURIComponent("東")]:["url('font0001.png')",96,"1051px 811px","672px -102px"],
+    [encodeURIComponent("區")]:["url('font0001.png')",96,"1051px 811px","768px -102px"],
+    [encodeURIComponent("海")]:["url('font0001.png')",96,"1051px 811px","864px -102px"],
+    [encodeURIComponent("底")]:["url('font0001.png')",96,"1051px 811px","960px -102px"],
+    [encodeURIComponent("隧")]:["url('font0001.png')",96,"1051px 811px","0px -204px"],
+    [encodeURIComponent("道")]:["url('font0001.png')",96,"1051px 811px","96px -204px"],
+    [encodeURIComponent("鴨")]:["url('font0001.png')",96,"1051px 811px","192px -204px"],
+    [encodeURIComponent("脷")]:["url('font0001.png')",96,"1051px 811px","288px -204px"],
+    [encodeURIComponent("洲")]:["url('font0001.png')",96,"1051px 811px","384px -204px"],
+    [encodeURIComponent("寶")]:["url('font0001.png')",96,"1051px 811px","480px -204px"],
+    [encodeURIComponent("琳")]:["url('font0001.png')",96,"1051px 811px","576px -204px"],
+    [encodeURIComponent("義")]:["url('font0001.png')",96,"1051px 811px","672px -204px"],
+    [encodeURIComponent("德")]:["url('font0001.png')",96,"1051px 811px","768px -204px"],
+    [encodeURIComponent("金")]:["url('font0001.png')",96,"1051px 811px","864px -204px"],
+    [encodeURIComponent("城")]:["url('font0001.png')",96,"1051px 811px","960px -204px"],
+    [encodeURIComponent("嘉")]:["url('font0001.png')",96,"1051px 811px","0px -306px"],
+    [encodeURIComponent("強")]:["url('font0001.png')",96,"1051px 811px","96px -306px"],
+    [encodeURIComponent("定")]:["url('font0001.png')",96,"1051px 811px","192px -306px"],
+    [encodeURIComponent("富")]:["url('font0001.png')",96,"1051px 811px","288px -306px"],
+    [encodeURIComponent("牛")]:["url('font0001.png')",96,"1051px 811px","384px -306px"],
+    [encodeURIComponent("頭")]:["url('font0001.png')",96,"1051px 811px","480px -306px"],
+    [encodeURIComponent("角")]:["url('font0001.png')",96,"1051px 811px","576px -306px"],
+    [encodeURIComponent("站")]:["url('font0001.png')",96,"1051px 811px","672px -306px"],
+    [encodeURIComponent("市")]:["url('font0001.png')",96,"1051px 811px","768px -306px"],
+    [encodeURIComponent("中")]:["url('font0001.png')",96,"1051px 811px","864px -306px"],
+    [encodeURIComponent("心")]:["url('font0001.png')",96,"1051px 811px","960px -306px"],
+    [encodeURIComponent("達")]:["url('font0001.png')",96,"1051px 811px","0px -408px"],
+    [encodeURIComponent("香")]:["url('font0001.png')",96,"1051px 811px","96px -408px"],
+    [encodeURIComponent("港")]:["url('font0001.png')",96,"1051px 811px","192px -408px"],
+    [encodeURIComponent("兒")]:["url('font0001.png')",96,"1051px 811px","288px -408px"],
+    [encodeURIComponent("童")]:["url('font0001.png')",96,"1051px 811px","384px -408px"],
+    [encodeURIComponent("醫")]:["url('font0001.png')",96,"1051px 811px","480px -408px"],
+    [encodeURIComponent("院")]:["url('font0001.png')",96,"1051px 811px","576px -408px"],
+    [encodeURIComponent("常")]:["url('font0001.png')",96,"1051px 811px","672px -408px"],
+    [encodeURIComponent("悅")]:["url('font0001.png')",96,"1051px 811px","768px -408px"],
+    [encodeURIComponent("九")]:["url('font0001.png')",96,"1051px 811px","864px -408px"],
+    [encodeURIComponent("龍")]:["url('font0001.png')",96,"1051px 811px","960px -408px"],
+    [encodeURIComponent("灣")]:["url('font0001.png')",96,"1051px 811px","0px -510px"],
+    [encodeURIComponent("運")]:["url('font0001.png')",96,"1051px 811px","96px -510px"],
+    [encodeURIComponent("動")]:["url('font0001.png')",96,"1051px 811px","192px -510px"],
+    [encodeURIComponent("場")]:["url('font0001.png')",96,"1051px 811px","288px -510px"],
+    [encodeURIComponent("麗")]:["url('font0001.png')",96,"1051px 811px","384px -510px"],
+    [encodeURIComponent("晶")]:["url('font0001.png')",96,"1051px 811px","480px -510px"],
+    [encodeURIComponent("花")]:["url('font0001.png')",96,"1051px 811px","576px -510px"],
+    [encodeURIComponent("園")]:["url('font0001.png')",96,"1051px 811px","672px -510px"],
+    [encodeURIComponent("第")]:["url('font0001.png')",96,"1051px 811px","768px -510px"],
+    [encodeURIComponent("座")]:["url('font0001.png')",96,"1051px 811px","864px -510px"],
+    [encodeURIComponent("沐")]:["url('font0001.png')",96,"1051px 811px","960px -510px"],
+    [encodeURIComponent("虹")]:["url('font0001.png')",96,"1051px 811px","0px -612px"],
+    [encodeURIComponent("譽")]:["url('font0001.png')",96,"1051px 811px","96px -612px"],
+    [encodeURIComponent("轉")]:["url('font0001.png')",96,"1051px 811px","192px -612px"],
+    [encodeURIComponent("乘")]:["url('font0001.png')",96,"1051px 811px","288px -612px"],
+    [encodeURIComponent("巴")]:["url('font0001.png')",96,"1051px 811px","384px -612px"],
+    [encodeURIComponent("士")]:["url('font0001.png')",96,"1051px 811px","480px -612px"],
+    [encodeURIComponent("路")]:["url('font0001.png')",96,"1051px 811px","576px -612px"],
+    [encodeURIComponent("線")]:["url('font0001.png')",96,"1051px 811px","672px -612px"],
+    [encodeURIComponent("蘇")]:["url('font0001.png')",96,"1051px 811px","768px -612px"],
+    [encodeURIComponent("屋")]:["url('font0001.png')",96,"1051px 811px","864px -612px"],
+    [encodeURIComponent("侯")]:["url('font0001.png')",96,"1051px 811px","960px -612px"],
+    [encodeURIComponent("王")]:["url('font0001.png')",96,"1051px 811px","0px -714px"],
+    [encodeURIComponent("利")]:["url('font0001.png')",96,"1051px 811px","96px -714px"],
+    [encodeURIComponent("喇")]:["url('font0001.png')",96,"1051px 811px","192px -714px"],
+    [encodeURIComponent("沙")]:["url('font0001.png')",96,"1051px 811px","288px -714px"],
+    [encodeURIComponent("書")]:["url('font0001.png')",96,"1051px 811px","384px -714px"],
+    [encodeURIComponent("津")]:["url('font0001.png')",96,"1051px 811px","480px -714px"],
+    [encodeURIComponent("基")]:["url('font0001.png')",96,"1051px 811px","576px -714px"],
+    [encodeURIComponent("督")]:["url('font0001.png')",96,"1051px 811px","672px -714px"],
+    [encodeURIComponent("堂")]:["url('font0001.png')",96,"1051px 811px","768px -714px"],
+    [encodeURIComponent("多")]:["url('font0001.png')",96,"1051px 811px","864px -714px"],
+    [encodeURIComponent("實")]:["url('font0001.png')",96,"1051px 811px","960px -714px"],
+
+    [encodeURIComponent("根")]:["url('font0002.png')",96,"1051px 811px","0px 0px"],
+    [encodeURIComponent("又")]:["url('font0002.png')",96,"1051px 811px","96px 0px"],
+    [encodeURIComponent("一")]:["url('font0002.png')",96,"1051px 811px","192px 0px"],
+    [encodeURIComponent("信")]:["url('font0002.png')",96,"1051px 811px","288px 0px"],
+    [encodeURIComponent("用")]:["url('font0002.png')",96,"1051px 811px","384px 0px"],
+    [encodeURIComponent("卡")]:["url('font0002.png')",96,"1051px 811px","480px 0px"],
+    [encodeURIComponent("涌")]:["url('font0002.png')",96,"1051px 811px","576px 0px"],
+    [encodeURIComponent("纜")]:["url('font0002.png')",96,"1051px 811px","672px 0px"],
+    [encodeURIComponent("車")]:["url('font0002.png')",96,"1051px 811px","768px 0px"],
+    [encodeURIComponent("薈")]:["url('font0002.png')",96,"1051px 811px","864px 0px"],
+    [encodeURIComponent("裕")]:["url('font0002.png')",96,"1051px 811px","960px 0px"],
+    [encodeURIComponent("青")]:["url('font0002.png')",96,"1051px 811px","0px -102px"],
+    [encodeURIComponent("嶼")]:["url('font0002.png')",96,"1051px 811px","96px -102px"],
+    [encodeURIComponent("幹")]:["url('font0002.png')",96,"1051px 811px","192px -102px"],
+    [encodeURIComponent("繳")]:["url('font0002.png')",96,"1051px 811px","288px -102px"],
+    [encodeURIComponent("費")]:["url('font0002.png')",96,"1051px 811px","384px -102px"],
+    [encodeURIComponent("廣")]:["url('font0002.png')",96,"1051px 811px","480px -102px"],
+    [encodeURIComponent("畢")]:["url('font0002.png')",96,"1051px 811px","576px -102px"],
+    [encodeURIComponent("架")]:["url('font0002.png')",96,"1051px 811px","672px -102px"],
+    [encodeURIComponent("山")]:["url('font0002.png')",96,"1051px 811px","768px -102px"],
+    [encodeURIComponent("豐")]:["url('font0002.png')",96,"1051px 811px","864px -102px"],
+    [encodeURIComponent("力")]:["url('font0002.png')",96,"1051px 811px","960px -102px"],
+    [encodeURIComponent("飛")]:["url('font0002.png')",96,"1051px 811px","0px -204px"],
+    [encodeURIComponent("機")]:["url('font0002.png')",96,"1051px 811px","96px -204px"],
+    [encodeURIComponent("燃")]:["url('font0002.png')",96,"1051px 811px","192px -204px"],
+    [encodeURIComponent("料")]:["url('font0002.png')",96,"1051px 811px","288px -204px"],
+    [encodeURIComponent("庫")]:["url('font0002.png')",96,"1051px 811px","384px -204px"],
+    [encodeURIComponent("國")]:["url('font0002.png')",96,"1051px 811px","480px -204px"],
+    [encodeURIComponent("泰")]:["url('font0002.png')",96,"1051px 811px","576px -204px"],
+    [encodeURIComponent("空")]:["url('font0002.png')",96,"1051px 811px","672px -204px"],
+    [encodeURIComponent("亞")]:["url('font0002.png')",96,"1051px 811px","768px -204px"],
+    [encodeURIComponent("樞")]:["url('font0002.png')",96,"1051px 811px","864px -204px"],
+    [encodeURIComponent("紐")]:["url('font0002.png')",96,"1051px 811px","960px -204px"],
+    [encodeURIComponent("政")]:["url('font0002.png')",96,"1051px 811px","0px -306px"],
+    [encodeURIComponent("府")]:["url('font0002.png')",96,"1051px 811px","96px -306px"],
+    [encodeURIComponent("行")]:["url('font0002.png')",96,"1051px 811px","192px -306px"],
+    [encodeURIComponent("服")]:["url('font0002.png')",96,"1051px 811px","288px -306px"],
+    [encodeURIComponent("務")]:["url('font0002.png')",96,"1051px 811px","384px -306px"],
+    [encodeURIComponent("隊")]:["url('font0002.png')",96,"1051px 811px","480px -306px"],
+    [encodeURIComponent("維")]:["url('font0002.png')",96,"1051px 811px","576px -306px"],
+    [encodeURIComponent("修")]:["url('font0002.png')",96,"1051px 811px","672px -306px"],
+    [encodeURIComponent("貨")]:["url('font0002.png')",96,"1051px 811px","768px -306px"],
+    [encodeURIComponent("赤")]:["url('font0002.png')",96,"1051px 811px","864px -306px"],
+    [encodeURIComponent("鱲")]:["url('font0002.png')",96,"1051px 811px","960px -306px"],
+    [encodeURIComponent("消")]:["url('font0002.png')",96,"1051px 811px","0px -408px"],
+    [encodeURIComponent("防")]:["url('font0002.png')",96,"1051px 811px","96px -408px"],
+    [encodeURIComponent("局")]:["url('font0002.png')",96,"1051px 811px","192px -408px"],
+    [encodeURIComponent("厨")]:["url('font0002.png')",96,"1051px 811px","288px -408px"],
+    [encodeURIComponent("駿")]:["url('font0002.png')",96,"1051px 811px","384px -408px"],
+    [encodeURIComponent("南")]:["url('font0002.png')",96,"1051px 811px","480px -408px"],
+    [encodeURIComponent("則")]:["url('font0002.png')",96,"1051px 811px","576px -408px"],
+    [encodeURIComponent("橫")]:["url('font0002.png')",96,"1051px 811px","672px -408px"],
+    [encodeURIComponent("坳")]:["url('font0002.png')",96,"1051px 811px","768px -408px"],
+    [encodeURIComponent("田")]:["url('font0002.png')",96,"1051px 811px","864px -408px"],
+    [encodeURIComponent("阿")]:["url('font0002.png')",96,"1051px 811px","960px -408px"],
+    [encodeURIComponent("長")]:["url('font0002.png')",96,"1051px 811px","0px -510px"],
+    [encodeURIComponent("提")]:["url('font0002.png')",96,"1051px 811px","96px -510px"],
+    [encodeURIComponent("醒")]:["url('font0002.png')",96,"1051px 811px","192px -510px"],
+    [encodeURIComponent("您")]:["url('font0002.png')",96,"1051px 811px","288px -510px"],
+    [encodeURIComponent("唔")]:["url('font0002.png')",96,"1051px 811px","384px -510px"],
+    [encodeURIComponent("好")]:["url('font0002.png')",96,"1051px 811px","480px -510px"],
+    [encodeURIComponent("兩")]:["url('font0002.png')",96,"1051px 811px","576px -510px"],
+    [encodeURIComponent("手")]:["url('font0002.png')",96,"1051px 811px","672px -510px"],
+    [encodeURIComponent("揈")]:["url('font0002.png')",96,"1051px 811px","768px -510px"],
+    [encodeURIComponent("記")]:["url('font0002.png')",96,"1051px 811px","864px -510px"],
+    [encodeURIComponent("得")]:["url('font0002.png')",96,"1051px 811px","960px -510px"],
+    [encodeURIComponent("握")]:["url('font0002.png')",96,"1051px 811px","0px -612px"],
+    [encodeURIComponent("緊")]:["url('font0002.png')",96,"1051px 811px","96px -612px"],
+    [encodeURIComponent("扶")]:["url('font0002.png')",96,"1051px 811px","192px -612px"],
+    [encodeURIComponent("永")]:["url('font0002.png')",96,"1051px 811px","288px -612px"],
+    [encodeURIComponent("冇")]:["url('font0002.png')",96,"1051px 811px","384px -612px"],
+    [encodeURIComponent("甩")]:["url('font0002.png')",96,"1051px 811px","480px -612px"],
+    [encodeURIComponent("前")]:["url('font0002.png')",96,"1051px 811px","576px -612px"],
+    [encodeURIComponent("往")]:["url('font0002.png')",96,"1051px 811px","672px -612px"],
+    [encodeURIComponent("迪")]:["url('font0002.png')",96,"1051px 811px","768px -612px"],
+    [encodeURIComponent("尼")]:["url('font0002.png')",96,"1051px 811px","864px -612px"],
+    [encodeURIComponent("樂")]:["url('font0002.png')",96,"1051px 811px","960px -612px"],
+    [encodeURIComponent("請")]:["url('font0002.png')",96,"1051px 811px","0px -714px"],
+    [encodeURIComponent("在")]:["url('font0002.png')",96,"1051px 811px","96px -714px"],
+    [encodeURIComponent("此")]:["url('font0002.png')",96,"1051px 811px","192px -714px"],
+    [encodeURIComponent("客")]:["url('font0002.png')",96,"1051px 811px","288px -714px"],
+    [encodeURIComponent("廂")]:["url('font0002.png')",96,"1051px 811px","384px -714px"],
+    [encodeURIComponent("内")]:["url('font0002.png')",96,"1051px 811px","480px -714px"],
+    [encodeURIComponent("使")]:["url('font0002.png')",96,"1051px 811px","576px -714px"],
+    [encodeURIComponent("遮")]:["url('font0002.png')",96,"1051px 811px","672px -714px"],
+    [encodeURIComponent("打")]:["url('font0002.png')",96,"1051px 811px","768px -714px"],
+    [encodeURIComponent("老")]:["url('font0002.png')",96,"1051px 811px","864px -714px"],
+    [encodeURIComponent("誌")]:["url('font0002.png')",96,"1051px 811px","960px -714px"],
+
+    [encodeURIComponent("北")]:["url('font0003.png')",96,"1051px 811px","0px 0px"],
+    [encodeURIComponent("百")]:["url('font0003.png')",96,"1051px 811px","96px 0px"],
+    [encodeURIComponent("福")]:["url('font0003.png')",96,"1051px 811px","192px 0px"],
+    [encodeURIComponent("廠")]:["url('font0003.png')",96,"1051px 811px","288px 0px"],
+    [encodeURIComponent("仔")]:["url('font0003.png')",96,"1051px 811px","384px 0px"],
+    [encodeURIComponent("魚")]:["url('font0003.png')",96,"1051px 811px","480px 0px"],
+    [encodeURIComponent("類")]:["url('font0003.png')",96,"1051px 811px","576px 0px"],
+    [encodeURIComponent("批")]:["url('font0003.png')",96,"1051px 811px","672px 0px"],
+    [encodeURIComponent("發")]:["url('font0003.png')",96,"1051px 811px","768px 0px"],
+    [encodeURIComponent("屌")]:["url('font0003.png')",96,"1051px 811px","864px 0px"],
+    [encodeURIComponent("的")]:["url('font0003.png')",96,"1051px 811px","960px 0px"],
+    [encodeURIComponent("電")]:["url('font0003.png')",96,"1051px 811px","0px -102px"],
+    [encodeURIComponent("話")]:["url('font0003.png')",96,"1051px 811px","96px -102px"],
+    [encodeURIComponent("時")]:["url('font0003.png')",96,"1051px 811px","192px -102px"],
+    [encodeURIComponent("注")]:["url('font0003.png')",96,"1051px 811px","288px -102px"],
+    [encodeURIComponent("意")]:["url('font0003.png')",96,"1051px 811px","384px -102px"],
+    [encodeURIComponent("安")]:["url('font0003.png')",96,"1051px 811px","480px -102px"],
+    [encodeURIComponent("全")]:["url('font0003.png')",96,"1051px 811px","576px -102px"],
+    [encodeURIComponent("及")]:["url('font0003.png')",96,"1051px 811px","672px -102px"],
+    [encodeURIComponent("避")]:["url('font0003.png')",96,"1051px 811px","768px -102px"],
+    [encodeURIComponent("免")]:["url('font0003.png')",96,"1051px 811px","864px -102px"],
+    [encodeURIComponent("對")]:["url('font0003.png')",96,"1051px 811px","960px -102px"],
+    [encodeURIComponent("其")]:["url('font0003.png')",96,"1051px 811px","0px -204px"],
+    [encodeURIComponent("他")]:["url('font0003.png')",96,"1051px 811px","96px -204px"],
+    [encodeURIComponent("造")]:["url('font0003.png')",96,"1051px 811px","192px -204px"],
+    [encodeURIComponent("成")]:["url('font0003.png')",96,"1051px 811px","288px -204px"],
+    [encodeURIComponent("滋")]:["url('font0003.png')",96,"1051px 811px","384px -204px"],
+    [encodeURIComponent("擾")]:["url('font0003.png')",96,"1051px 811px","480px -204px"],
+    [encodeURIComponent("池")]:["url('font0003.png')",96,"1051px 811px","576px -204px"],
+    [encodeURIComponent("村")]:["url('font0003.png')",96,"1051px 811px","672px -204px"],
+    [encodeURIComponent("下")]:["url('font0003.png')",96,"1051px 811px","768px -204px"],
+    [encodeURIComponent("宏")]:["url('font0003.png')",96,"1051px 811px","864px -204px"],
+    [encodeURIComponent("照")]:["url('font0003.png')",96,"1051px 811px","960px -204px"],
+    [encodeURIComponent("黃")]:["url('font0003.png')",96,"1051px 811px","0px -306px"],
+    [encodeURIComponent("大")]:["url('font0003.png')",96,"1051px 811px","96px -306px"],
+    [encodeURIComponent("仙")]:["url('font0003.png')",96,"1051px 811px","192px -306px"],
+    [encodeURIComponent("法")]:["url('font0003.png')",96,"1051px 811px","288px -306px"],
+    [encodeURIComponent("例")]:["url('font0003.png')",96,"1051px 811px","384px -306px"],
+    [encodeURIComponent("規")]:["url('font0003.png')",96,"1051px 811px","480px -306px"],
+    [encodeURIComponent("總")]:["url('font0003.png')",96,"1051px 811px","576px -306px"],
+    [encodeURIComponent("處")]:["url('font0003.png')",96,"1051px 811px","672px -306px"],
+    [encodeURIComponent("搭")]:["url('font0003.png')",96,"1051px 811px","768px -306px"],
+    [encodeURIComponent("磡")]:["url('font0003.png')",96,"1051px 811px","864px -306px"],
+    [encodeURIComponent("豪")]:["url('font0003.png')",96,"1051px 811px","960px -306px"],
+    [encodeURIComponent("方")]:["url('font0003.png')",96,"1051px 811px","0px -408px"],
+    [encodeURIComponent("酒")]:["url('font0003.png')",96,"1051px 811px","96px -408px"],
+    [encodeURIComponent("店")]:["url('font0003.png')",96,"1051px 811px","192px -408px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","288px -408px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","384px -408px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","480px -408px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","576px -408px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","672px -408px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","768px -408px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","864px -408px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","960px -408px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","0px -510px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","96px -510px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","192px -510px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","288px -510px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","384px -510px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","480px -510px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","576px -510px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","672px -510px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","768px -510px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","864px -510px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","960px -510px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","0px -612px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","96px -612px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","192px -612px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","288px -612px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","384px -612px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","480px -612px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","576px -612px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","672px -612px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","768px -612px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","864px -612px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","960px -612px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","0px -714px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","96px -714px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","192px -714px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","288px -714px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","384px -714px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","480px -714px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","576px -714px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","672px -714px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","768px -714px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","864px -714px"],
+    [encodeURIComponent("")]:["url('font0003.png')",96,"1051px 811px","960px -714px"],
+}
+var listEng = {
+    ["@"]:["url('font1001.png')",180,"967px 505px","0 0"],
+    ["$"]:["url('font1001.png')",66,"967px 505px","180px 0px"],
+    ["^"]:["url('font1001.png')",126,"967px 505px","246px 0px"],
+    ["&"]:["url('font1001.png')",108,"967px 505px","445px 0px"],
+    ["!"]:["url('font1001.png')",108,"967px 505px","553px 0px"],
+    ["+"]:["url('font1001.png')",78,"967px 505px","661px 0px"],
+    ["-"]:["url('font1001.png')",78,"0 0","0 0"],
+    [","]:["url('font1001.png')",12,"967px 505px","865px 0px"],
+    ["."]:["url('font1001.png')",12,"967px 505px","853px 0px"],
+    A:["url('font1001.png')",60,"967px 505px","145px -204px"],
+    B:["url('font1001.png')",60,"967px 505px","205px -204px"],
+    C:["url('font1001.png')",66,"967px 505px","265px -204px"],
+    D:["url('font1001.png')",66,"967px 505px","330px -204px"],
+    E:["url('font1001.png')",60,"967px 505px","396px -204px"],
+    F:["url('font1001.png')",60,"967px 505px","456px -204px"],
+    G:["url('font1001.png')",66,"967px 505px","516px -204px"],
+    H:["url('font1001.png')",60,"967px 505px","580px -204px"],
+    I:["url('font1001.png')",24,"967px 505px","643px -204px"],
+    J:["url('font1001.png')",54,"967px 505px","667px -204px"],
+    K:["url('font1001.png')",60,"967px 505px","720px -204px"],
+    L:["url('font1001.png')",48,"967px 505px","780px -204px"],
+    M:["url('font1001.png')",72,"967px 505px","829px -204px"],
+    N:["url('font1001.png')",60,"967px 505px","900px -204px"],
+    O:["url('font1001.png')",66,"967px 505px","0px -306px"],
+    P:["url('font1001.png')",60,"967px 505px","67px -306px"],
+    Q:["url('font1001.png')",66,"967px 505px","126px -306px"],
+    R:["url('font1001.png')",60,"967px 505px","192px -306px"],
+    S:["url('font1001.png')",60,"967px 505px","252px -306px"],
+    T:["url('font1001.png')",60,"967px 505px","313px -306px"],
+    U:["url('font1001.png')",66,"967px 505px","373px -306px"],
+    V:["url('font1001.png')",72,"967px 505px","438px -306px"],
+    W:["url('font1001.png')",96,"967px 505px","510px -306px"],
+    X:["url('font1001.png')",60,"967px 505px","605px -306px"],
+    Y:["url('font1001.png')",60,"967px 505px","665px -306px"],
+    Z:["url('font1001.png')",96,"967px 505px","725px -306px"],
+    a:["url('font1001.png')",48,"967px 505px","0px -102px"],
+    b:["url('font1001.png')",48,"967px 505px","48px -102px"],
+    c:["url('font1001.png')",42,"967px 505px","96px -102px"],
+    d:["url('font1001.png')",48,"967px 505px","138px -102px"],
+    e:["url('font1001.png')",48,"967px 505px","186px -102px"],
+    f:["url('font1001.png')",30,"967px 505px","234px -102px"],
+    g:["url('font1001.png')",48,"967px 505px","264px -102px"],
+    h:["url('font1001.png')",42,"967px 505px","312px -102px"],
+    i:["url('font1001.png')",12,"967px 505px","354px -102px"],
+    j:["url('font1001.png')",24,"967px 505px","366px -102px"],
+    k:["url('font1001.png')",48,"967px 505px","390px -102px"],
+    l:["url('font1001.png')",12,"967px 505px","438px -102px"],
+    m:["url('font1001.png')",72,"967px 505px","450px -102px"],
+    n:["url('font1001.png')",42,"967px 505px","522px -102px"],
+    o:["url('font1001.png')",48,"967px 505px","564px -102px"],
+    p:["url('font1001.png')",48,"967px 505px","612px -102px"],
+    q:["url('font1001.png')",48,"967px 505px","660px -102px"],
+    r:["url('font1001.png')",30,"967px 505px","708px -102px"],
+    s:["url('font1001.png')",42,"967px 505px","738px -102px"],
+    t:["url('font1001.png')",30,"967px 505px","780px -102px"],
+    u:["url('font1001.png')",42,"967px 505px","810px -102px"],
+    v:["url('font1001.png')",48,"967px 505px","852px -102px"],
+    w:["url('font1001.png')",72,"967px 505px","900px -102px"],
+    x:["url('font1001.png')",48,"967px 505px","0px -204px"],
+    y:["url('font1001.png')",48,"967px 505px","48px -204px"],
+    z:["url('font1001.png')",48,"967px 505px","96px -204px"],
+}
+//https://static.wikia.nocookie.net/hongkongbus/images/8/8c/5542_RK3144%40112%E5%8C%97%E8%A7%92%28%E7%99%BE%E7%A6%8F%E9%81%93%29%E5%A0%B1%E7%AB%99.JPG/revision/latest?cb=20120606142926&path-prefix=zh
+var id
+var width = 0
+
+function makeSpace(parent,breadth){
+    var space = document.createElement("div");
+    space.classList.add("char")
+    space.style.width = breadth + "px";
+    parent.appendChild(space);
+    width = width + breadth;
+}
+function pack(parent,text,list,isChi){
+    var currentWidth = 0;
+    for (char of text){
+        var item
+        if (isChi){item = list[encodeURIComponent(char)]} else {item = list[char]}
+        if (item){
+            var img = document.createElement("div");
+            img.style.background = item[0] + " -" + item[3] + "/" + item[2] + " no-repeat";
+            img.classList.add("char");
+            img.style.width = item[1] + "px";
+            width = width + item[1];
+            currentWidth = currentWidth + item[1];
+            parent.appendChild(img);
+            if (char == "-"){engtochi = img}
+        }
+        else {makeSpace(parent,30)}
+        }
+    return currentWidth
+}
+function resized(){
+    document.getElementById("frameL").style.width = (window.innerWidth/2 - 512) + "px";
+    document.getElementById("frameR").style.width = (window.innerWidth/2 - 512) + "px";
+}
+document.getElementById("submit").addEventListener("click",function(){
+    clearInterval(prevFrame);
+    if (stopped == true){
+        previous = document.getElementById("target").cloneNode(true);
+        var widthPrev = parseInt(previous.style.width.slice(0,-2));
+        previous.id = "previous";
+        document.getElementById("display").appendChild(previous);}
+    stopped = false;
+    width = 0;
+    clearInterval(id);
+    var target = document.getElementById("target");
+    target.innerHTML = "";
+    var textChi = document.getElementById("inputchi").value + document.getElementById("inputinfo").value;
+    switch (document.getElementById("status").value){
+        case "0":
+            textChi = document.getElementById("stopnum").value + ". @-" + textChi;
+            pack(target,textChi,listChi,true);
+            makeSpace(target,250);
+            pack(target,document.getElementById("inputeng").value,listEng,false);
+            makeSpace(target,250);
+            var supervised = pack(target,"@-" + document.getElementById("inputchi").value,listChi,true);
+            if (supervised < 940 && supervised > 834){engtochi.style.width = "128px";supervised = supervised - 50}
+            if (supervised < 844){makeSpace(target,(845 - supervised)/2)}
+            else if (supervised < 1103){makeSpace(target,(1150 - supervised)/2)}
+            target.style.width = width + "px";
+            target.style.marginLeft = "";
+            break;
+        case "1":
+            textChi = document.getElementById("stopnum").value + ". $-" + textChi;
+            pack(target,textChi,listChi,true);
+            makeSpace(target,250);
+            pack(target,document.getElementById("inputeng").value,listEng,false);
+            makeSpace(target,250);
+            var supervised = pack(target,"$-" + document.getElementById("inputchi").value,listChi,true);
+            if (supervised < 844){makeSpace(target,(865 - supervised)/2)} else {makeSpace(target,(1123 - supervised)/2)}
+            target.style.width = width + "px";
+            target.style.marginLeft = "";
+            break;
+        case "2":
+            pack(target,"&-" + document.getElementById("inputchi").value,listChi,true);
+            makeSpace(target,250);
+            pack(target,document.getElementById("inputeng").value,listEng,false);
+            makeSpace(target,865);
+            target.style.width = width + "px";
+            target.style.marginLeft = "";
+            break;
+        case "3":
+            pack(target,"!-" + document.getElementById("inputchi").value,listChi,true);
+            makeSpace(target,250);
+            pack(target,"!-" + document.getElementById("inputeng").value,listEng,false);
+            makeSpace(target,865);
+            target.style.width = width + "px";
+            target.style.marginLeft = "";
+            break;
+    }
+    if (width > window.innerWidth) {
+    var pos = window.innerWidth;
+    prevLeft = parseInt(previous.style.left.slice(0,-2));
+    id = setInterval(frame, 15);
+    function frame(){
+        if (pos <= (window.innerWidth)/2 + 412 - width){
+            target.style.left = pos + 6 + "px";
+            stopped = true;
+            previous.parentNode.removeChild(previous);
+            clearInterval(id)}
+        else{pos = pos - 6;prevLeft = prevLeft - 6;target.style.left = pos + "px";previous.style.left = prevLeft + "px";}
+    }}
+    else{target.style.marginLeft = "-" + width/2 + "px";target.style.left = "50%";}
+})
+window.addEventListener("resize",resized)
+resized()
+</script>
+</body>
+</html>
