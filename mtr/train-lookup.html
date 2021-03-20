@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>M Train Lookup - Dest Signs</title>
+<title>MTR Train Lookup - Dest Signs</title>
 <link href="../style.css" rel="stylesheet">
 <style>
 #input{display:inline-block;width:70px;cursor:text;font-family:monospace;resize:none;height:35px;position:relative;top:5px}
@@ -21,7 +21,7 @@ var results = document.getElementById("results");
 function check(){
     var input = document.getElementById("input").value.toUpperCase();
     document.getElementById("input").value = input;
-    fetch("data.json")
+    fetch("data-mtr.json")
     .then(response => response.json())
     .then(function(checkList){
         if (checkList.hasOwnProperty(input)){

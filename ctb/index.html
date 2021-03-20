@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>CTB LECIP Stop Reporter</title>
+<title>CTB LECIP Stop Reporter - Dest Signs</title>
 <link rel="shortcut icon" href="icon.png" />
 <style>
-html,body{margin:0;padding:10px;font-family:sans-serif;background-color:#867e71;overflow:hidden}
+html,body{overflow:hidden}
 dt{font-size:20px;color:white}
 dl dd{position:relative;height:100%;margin:-30px 5px 5px 200px;padding:5px 0px;width:40%}
 input,select{width:100%;font-size:20px;border:0;margin:0;outline:0}
@@ -21,6 +21,7 @@ input:focus{background-color:#ccc}
 </style>
 </head>
 <body>
+<div id="content">
 <dl><dt>Status</dt><dd><select id="status">
     <option value="0">Not arrived</option>
     <option value="1">Arrived</option>
@@ -40,6 +41,8 @@ input:focus{background-color:#ccc}
 <div style="z-index:10" id="frameL" class="cover"></div>
 <div style="z-index:10" id="frameR" class="cover"></div>
 </div>
+</div>
+<script src="../start.js"></script>
 <script>
 var stopped = true
 var prevFrame,engtochi,previous,prevLeft
@@ -404,7 +407,6 @@ var listEng = {
 //https://static.wikia.nocookie.net/hongkongbus/images/8/8c/5542_RK3144%40112%E5%8C%97%E8%A7%92%28%E7%99%BE%E7%A6%8F%E9%81%93%29%E5%A0%B1%E7%AB%99.JPG/revision/latest?cb=20120606142926&path-prefix=zh
 var id
 var width = 0
-
 function makeSpace(parent,breadth){
     var space = document.createElement("div");
     space.classList.add("char")
@@ -412,11 +414,11 @@ function makeSpace(parent,breadth){
     parent.appendChild(space);
     width = width + breadth;
 }
-function pack(parent,text,list,isChi){
+function pack(parent,text,isChi){
     var currentWidth = 0;
     for (char of text){
         var item
-        if (isChi){item = list[encodeURIComponent(char)]} else {item = list[char]}
+        if (isChi){item = listChi[encodeURIComponent(char)]} else {item = listEng[char]}
         if (item){
             var img = document.createElement("div");
             img.style.background = item[0] + " -" + item[3] + "/" + item[2] + " no-repeat";
@@ -431,6 +433,27 @@ function pack(parent,text,list,isChi){
         }
     return currentWidth
 }
+/*function pack(parent,text,isChi){
+    var currentWidth = 0;
+    var jsonFile
+    if (isChi){jsonFile = "data-chi.json"} else {jsonFile = "data-eng.json"}
+    for (char of text){
+        fetch(jsonFile)
+        .then(response => response.json())
+        .then(function(checkList){
+        if (checkList.hasOwnProperty(char)){
+            var item = checkList[char]
+            var img = document.createElement("div");
+            img.style.background = item[0] + " -" + item[3] + "/" + item[2] + " no-repeat";
+            img.classList.add("char");
+            img.style.width = item[1] + "px";
+            width = width + item[1];
+            currentWidth = currentWidth + item[1];
+            parent.appendChild(img);
+            if (char == "-"){engtochi = img}}
+        else {makeSpace(parent,30)}})}
+    return currentWidth;
+}*/
 function resized(){
     document.getElementById("frameL").style.width = (window.innerWidth/2 - 512) + "px";
     document.getElementById("frameR").style.width = (window.innerWidth/2 - 512) + "px";
@@ -451,11 +474,11 @@ document.getElementById("submit").addEventListener("click",function(){
     switch (document.getElementById("status").value){
         case "0":
             textChi = document.getElementById("stopnum").value + ". @-" + textChi;
-            pack(target,textChi,listChi,true);
+            pack(target,textChi,true);
             makeSpace(target,250);
-            pack(target,document.getElementById("inputeng").value,listEng,false);
+            pack(target,document.getElementById("inputeng").value,false);
             makeSpace(target,250);
-            var supervised = pack(target,"@-" + document.getElementById("inputchi").value,listChi,true);
+            var supervised = pack(target,"@-" + document.getElementById("inputchi").value,true);
             if (supervised < 940 && supervised > 834){engtochi.style.width = "128px";supervised = supervised - 50}
             if (supervised < 844){makeSpace(target,(845 - supervised)/2)}
             else if (supervised < 1103){makeSpace(target,(1150 - supervised)/2)}
@@ -464,27 +487,27 @@ document.getElementById("submit").addEventListener("click",function(){
             break;
         case "1":
             textChi = document.getElementById("stopnum").value + ". $-" + textChi;
-            pack(target,textChi,listChi,true);
+            pack(target,textChi,true);
             makeSpace(target,250);
-            pack(target,document.getElementById("inputeng").value,listEng,false);
+            pack(target,document.getElementById("inputeng").value,false);
             makeSpace(target,250);
-            var supervised = pack(target,"$-" + document.getElementById("inputchi").value,listChi,true);
+            var supervised = pack(target,"$-" + document.getElementById("inputchi").value,true);
             if (supervised < 844){makeSpace(target,(865 - supervised)/2)} else {makeSpace(target,(1123 - supervised)/2)}
             target.style.width = width + "px";
             target.style.marginLeft = "";
             break;
         case "2":
-            pack(target,"&-" + document.getElementById("inputchi").value,listChi,true);
+            pack(target,"&-" + document.getElementById("inputchi").value,true);
             makeSpace(target,250);
-            pack(target,document.getElementById("inputeng").value,listEng,false);
+            pack(target,document.getElementById("inputeng").value,false);
             makeSpace(target,865);
             target.style.width = width + "px";
             target.style.marginLeft = "";
             break;
         case "3":
-            pack(target,"!-" + document.getElementById("inputchi").value,listChi,true);
+            pack(target,"!-" + document.getElementById("inputchi").value,true);
             makeSpace(target,250);
-            pack(target,"!-" + document.getElementById("inputeng").value,listEng,false);
+            pack(target,"!-" + document.getElementById("inputeng").value,false);
             makeSpace(target,865);
             target.style.width = width + "px";
             target.style.marginLeft = "";
