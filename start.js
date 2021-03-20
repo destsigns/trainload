@@ -35,7 +35,7 @@ footer.classList.add("bg-blue3","hidden","white");
 var img1 = document.createElement("img");img1.id = "footerimg1";
 footer.appendChild(img1);img1.src = "https://www.hkbrda.org/infolink/output/news-big.gif";
 var p1 = document.createElement("p");footer.appendChild(p1);p1.style = "position:absolute;padding:0;left:20px;width:300px"
-p1.innerHTML = 'Dest Signs 2021<br>All rights reserved<br><span style="font-size:12px">Last updated on 19 Mar 2021</span>'
+p1.innerHTML = 'Dest Signs 2021<br>All rights reserved<br><span style="font-size:12px">Last updated on 20 Mar 2021</span>'
 
 var content = document.getElementById("content");
 function posfooter(){var num = window.innerHeight - 310 + "px";content.style.minHeight = num}
