@@ -1,0 +1,9 @@
+Total number of dots = 144 X 16
+Number of dots <before, after>
+bus icon, chinese stop name: 13
+stop icon, chinese stop name: 13
+chinese stop name, MTR icon: 5
+chinese stop name, number: 6
+number, chinese stop name: 4
+MTR icon, punctuation: 4
+punctuation, chinese stop name: 4

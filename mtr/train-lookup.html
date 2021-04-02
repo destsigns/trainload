@@ -4,9 +4,10 @@
 <title>MTR Train Lookup - Dest Signs</title>
 <link href="../style.css" rel="stylesheet">
 <style>
-#input{display:inline-block;width:70px;cursor:text;font-family:monospace;resize:none;height:35px;position:relative;top:5px}
+#input{display:inline-block;width:80px;cursor:text;font-family:monospace;resize:none;height:35px;position:relative;top:5px}
 #submit{border-radius:10px;height:50px;border:0;cursor:pointer;outline:0px}
 [contenteditable]{outline:0px}
+@media (max-width:600px){#results{font-size:1.2em}}
 </style>
 </head>
 <body>
@@ -27,20 +28,20 @@ function check(){
         if (checkList.hasOwnProperty(input)){
             var li = checkList[input]
             var lineChi
-            if (li[1] != "L"){lineChi = "The default route for this car is <span style='background-color:"}
+            if (li[1] != "L"){lineChi = "Default route: <span style='background-color:"}
             switch (li[1]){
-                case "AEL":lineChi = lineChi + "#1c7670'>&nbsp;Airport Express&nbsp;</span>.";break;
-                case "DRL":lineChi = lineChi + "#f550a6'>&nbsp;Disneyland Resort Line&nbsp;</span>.";break;
-                case "ISL":lineChi = lineChi + "#0860a8'>&nbsp;Island Line&nbsp;</span>.";break;
-                case "KTL":lineChi = lineChi + "#00ab4e'>&nbsp;Kwun Tong Line&nbsp;</span>.";break;
-                case "SIL":lineChi = lineChi + "#b5bd00'>&nbsp;South Island Line&nbsp;</span>.";break;
-                case "TCL":lineChi = lineChi + "#fe7f1d'>&nbsp;Tung Chung Line&nbsp;</span>.";break;
-                case "TKL":lineChi = lineChi + "#6b208b'>&nbsp;Tseung Kwan O Line&nbsp;</span>.";break;
-                case "TWL":lineChi = lineChi + "#ff0000'>&nbsp;Tsuen Wan Line&nbsp;</span>.";break;
-                case "L":lineChi = "The car has not linked to become a complete unit.";
+                case "AEL":lineChi = lineChi + "#1c7670'>&nbsp;Airport Express&nbsp;</span>";break;
+                case "DRL":lineChi = lineChi + "#f550a6'>&nbsp;Disneyland Resort Line&nbsp;</span>";break;
+                case "ISL":lineChi = lineChi + "#0860a8'>&nbsp;Island Line&nbsp;</span>";break;
+                case "KTL":lineChi = lineChi + "#00ab4e'>&nbsp;Kwun Tong Line&nbsp;</span>";break;
+                case "SIL":lineChi = lineChi + "#b5bd00'>&nbsp;South Island Line&nbsp;</span>";break;
+                case "TCL":lineChi = lineChi + "#fe7f1d'>&nbsp;Tung Chung Line&nbsp;</span>";break;
+                case "TKL":lineChi = lineChi + "#6b208b'>&nbsp;Tseung Kwan O Line&nbsp;</span>";break;
+                case "TWL":lineChi = lineChi + "#ff0000'>&nbsp;Tsuen Wan Line&nbsp;</span>";break;
+                case "L":lineChi = "Car has not linked to form a complete unit.";
             }
             results.style.color = "";
-            results.innerHTML = "<br>The train car numbered " + input + " is a " + li[0] + " car.<br>" + lineChi + "";
+            results.innerHTML = "<br>Train car number: " + input + "<br>Train car model: " + li[0] + "<br>" + lineChi + "";
         }
         else {results.style.color = "#ff4949";results.innerHTML = "<br>We are sorry that we can't find what you are looking for.";}})
 }
