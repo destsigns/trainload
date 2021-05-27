@@ -65,7 +65,6 @@ document.getElementById("submit").addEventListener("click",function(){
     .then(response => response.json())
     .then(function(data){
         results.innerHTML = "";
-        console.log(data);
         data.platform_list.forEach(function(dataplat){
             var title = document.createElement("h2");
             title.id = "plat" + dataplat.platform_id + "title";
