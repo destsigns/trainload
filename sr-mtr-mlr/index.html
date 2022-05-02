@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<link rel="icon" href="favicon.svg">
+<title>MTR MLR InfoPanel</title>
+<style>
+* {box-sizing: border-box;font-family:sans-serif;font-size:20px}
+body{margin:0;padding:0;overflow-x:hidden;color:white;background-color:#222}
+input{width:100%;display:inline}
+table{padding:10px;width:100%}
+#submit{border-radius:15px;background-color:#53b7e8;text-align:center;cursor:pointer;padding:2px 0}
+select,#submit{width:100%}
+</style>
+</head>
+<body>
+<svg viewBox="0 0 1280 360">
+<defs>
+<linearGradient id="grad-cover" gradientTransform="rotate(90)">
+    <stop offset="0%"  stop-color="#afaaa6" />
+    <stop offset="65%" stop-color="#bebbc0" />
+    <stop offset="75%" stop-color="#8c9497" />
+</linearGradient>
+</defs>
+<rect id="bg" x="160" y="80" width="960" height="144" fill="black"/>
+<g id="display" transform="translate(163,83)"></g><!--translate(1120,80)-->
+<path style="fill:url(#grad-cover)" d="M 0 0 h 1280 v 360 h -1280 z m 160 80 v 144 h 960 v -144 z"/>
+</svg>
+<table>
+<tr>
+    <td class="col">
+        <select id="dest">
+            <option value="0">選擇目的地</option>
+            <option value="LOW">羅湖</option><option value="LMC">落馬洲</option>
+            <option value="SHS">上水</option><option value="TAP">大埔墟</option>
+            <option value="RAC">馬場</option><option value="FOT">火炭</option>
+            <option value="SHT">沙田</option><option value="MKK">旺角東</option>
+            <option value="HUH">紅磡</option><option value="ETS">尖東</option>
+        </select>
+    </td>
+    <td class="col">
+        <select id="stn">
+            <option value="0">選擇下一站</option>
+            <option value="LOW">羅湖</option><option value="LMC">落馬洲</option>
+            <option value="SHS">上水</option><option value="FAN">粉嶺</option>
+            <option value="TWO">太和</option><option value="TAP">大埔墟</option>
+            <option value="UNI">大學</option><option value="RAC">馬場</option>
+            <option value="FOT">火炭</option><option value="SHT">沙田</option>
+            <option value="TAW">大圍</option><option value="KOT">九龍塘</option>
+            <option value="MKK">旺角東</option><option value="HUH">紅磡</option>
+            <option value="ETS">尖東</option>
+        </select>
+    </td>
+    <td class="col"><select id="doors"><option value="0">車門已關閉</option><option value="1">車門已開啓</option></select></td>
+    <td class="col">
+        <select id="mtg">
+            <option value="0">選擇附加訊息</option>
+            <option value="gap">小心空隙</option>
+            <option value="level">留意地面高低</option>
+        </select>
+    </td>
+    <td class="col">
+        <select id="msg">
+            <option value="0">選擇額外訊息</option>
+            <option value="eat">請勿飲食或吸煙</option>
+            <option value="floor">請不要坐在地上</option>
+        </select>
+    </td>
+    <td class="col"><div id="submit">Submit!</div></td>
+</tr>
+</table>
+<script>
+var chiscroll = document.getElementsByTagName("select")[0];
+var display = document.getElementById("display");
+var offsetx = 0
+var currentX = 0;
+var delayTime = 0;
+var tweenlist = [[],[]]; // list 0 is timeout, list 1 is interval
+var info = {
+    "ETS_c":"尖東",
+    "ETS_e":"East Tsim Sha Tsui",
+    "HUH_c":"紅磡",
+    "HUH_e":"Hung Hom",
+    "MKK_c":"旺角東",
+    "MKK_e":"Mong Kok East",
+    "KOT_c":"九龍塘。往觀塘線各站，請在此站轉車。",
+    "KOT_e":"Kowloon Tong. Interchange station for the Kwun Tong Line.",
+    "TAW_c":"大圍。往屯馬線各站，請在此站轉車。",
+    "TAW_e":"Tai Wai. Interchange station for the Tuen Ma Line.",
+    "SHT_c":"沙田",
+    "SHT_e":"Sha Tin",
+    "FOT_c":"火炭",
+    "FOT_e":"Fo Tan",
+    "RAC_c":"馬場",
+    "RAC_e":"Racecourse",
+    "UNI_c":"大學",
+    "UNI_e":"University",
+    "TAP_c":"大埔墟",
+    "TAP_e":"Tai Po Market",
+    "TWO_c":"太和",
+    "TWO_e":"Tai Wo",
+    "FAN_c":"粉嶺",
+    "FAN_e":"Fanling",
+    "SHS_c":"上水",
+    "SHS_e":"Sheung Shui",
+    "LOW_c":"羅湖",
+    "LOW_e":"Lo Wu",
+    "LMC_c":"落馬洲",
+    "LMC_e":"Lok Ma Chau",
+    "via_c":"經馬場",
+    "via_e":" via Racecourse",
+
+    "end":"本班列車已到達終點站。乘客請在本站落車。　This train terminates here. Please leave the train. Thank you.",
+    "eat":"請不要在車上飲食或吸煙。　Please do not eat, drink or smoke on the train.",
+    "gap":"　請小心月台空隙。　Please mind the gap.",
+    "floor":"請不要坐在地上·　Please do not sit on the floor of the train compartments.",
+    "level":"　請小心空隙及留意月台與車廂地面高低。　Please mind the gap and be aware of the difference in levels between the platform and the train.",
+};
+function convert(item){
+    var offsety = 0;
+    for (var i = 0; i < item[2].length; i++) {
+        var length = 0;
+        if (item[2].charAt(i).toLowerCase() == "a"){length = 6}
+        else if (item[2].charAt(i).toLowerCase() == "b"){length = 12}
+        else if (item[2].charAt(i).toLowerCase() == "c"){length = 18}
+        else if (item[2].charAt(i).toLowerCase() == "d"){length = 24}
+        else if (item[2].charAt(i).toLowerCase() == "e"){length = 30}
+        else if (item[2].charAt(i).toLowerCase() == "f"){length = 36}
+        else if (item[2].charAt(i).toLowerCase() == "g"){length = 42}
+        else if (item[2].charAt(i).toLowerCase() == "h"){length = 48}
+        else if (item[2].charAt(i).toLowerCase() == "i"){length = 54}
+        else if (item[2].charAt(i).toLowerCase() == "j"){length = 60}
+        else if (item[2].charAt(i).toLowerCase() == "k"){length = 66}
+        else if (item[2].charAt(i).toLowerCase() == "l"){length = 72}
+        else if (item[2].charAt(i).toLowerCase() == "m"){length = 78}
+        else if (item[2].charAt(i).toLowerCase() == "n"){length = 84}
+        else if (item[2].charAt(i).toLowerCase() == "o"){length = 90}
+
+        if (item[2].charAt(i) == item[2].charAt(i).toUpperCase()){
+            for (let a = 0; a <= length - 6; a = a + 6){
+                var dot = document.createElementNS('http://www.w3.org/2000/svg',"circle");
+                dot.setAttribute("r","2.5");
+                dot.setAttribute("cx",a + offsetx);
+                dot.setAttribute("cy",offsety);
+                dot.setAttribute("fill",item[0]);
+                display.appendChild(dot);
+            }
+        }
+        offsetx = offsetx + length;
+        if (offsetx >= (item[1] -1) * 6 + currentX){offsetx = offsetx - (item[1] -1) * 6;offsety = offsety + 6}
+    }
+}
+var dest = document.getElementById("dest");
+var stn = document.getElementById("stn");
+var doors = document.getElementById("doors");
+var mtg = document.getElementById("mtg");
+var msg = document.getElementById("msg");
+
+document.getElementById("submit").addEventListener("click",function(){
+    tweenlist[0].forEach(function(value){clearTimeout(value)})
+    tweenlist[1].forEach(function(value){clearInterval(value)})
+    tweenlist = [[],[]];
+    fetch("font-mtr-mlr.json").then(response => response.json()).then(function(data){
+        display.innerHTML = "";currentX = 0;offsetx = 0;offsety = 6;delayTime = 0;
+        var text_u = "";var text_l = "";
+        if (dest.value == "0"){text_l = "歡迎乘搭東鐵綫·Welcome to EAST RAIL LINE."}
+        else if (doors.value == "1"){
+            if (stn.value == dest.value){text_l = info.end}
+            else {
+                text_u = "本列車往" + info[dest.value + "_c"];
+                text_l = "This train is going to " + info[dest.value + "_e"] + ".";
+            }
+        }
+        else if (msg.value != "0"){text_l = info[msg.value]}
+        else if (stn.value != "0"){
+            text_l = "下一站：" + info[stn.value + "_c"]
+            if (stn.value == "LOW" || stn.value == "LMC"){text_l = text_l + "。東鐵線的終點站。"}
+            text_l = text_l + "　Next station: " + info[stn.value + "_e"];
+            if (stn.value == "LOW" || stn.value == "LMC"){text_l = text_l + ". End of the East Rail Line."}
+            if (mtg.value != "0"){text_l = text_l + info[mtg.value]}
+        }
+
+        // Construct characters
+        if (text_u != ""){
+            for (let charIndex = 0; charIndex < text_u.length; charIndex++){
+                let item = data[text_u.charCodeAt(charIndex)];
+                if (item != null) {
+                    convert(item);
+                    currentX = item[1] * 6 + currentX;
+                    offsetx = currentX;offsety = 0;}
+            }
+            let x = 649 - currentX/2;delayTime = 5400;currentX = 90;
+            display.setAttribute("transform","translate(" + x + ",227)");
+            var i = 0;
+            for (let i = 0; i <= 24; i++){
+                let tweening = setTimeout(function(){
+                    display.setAttribute("transform","translate(" + x + "," + String(227 - i * 6) + ")");
+                },i * 58.3);
+                tweenlist[1].push(tweening);
+            }
+        }
+        let timeout = setTimeout(function(){
+            if (delayTime != 0) {display.innerHTML = ""}
+            offsetx = currentX;offsety = 0;
+            for (let charIndex = 0; charIndex < text_l.length; charIndex++){
+                let item = data[text_l.charCodeAt(charIndex)];
+                if (item != null) {
+                    convert(item);
+                    currentX = item[1] * 6 + currentX;
+                    offsetx = currentX;offsety = 0;
+                }
+            }
+            display.setAttribute("transform","translate(1123,83)");
+            for (let i = 0; i -160 < currentX/6; i++){
+                var tweening = setTimeout(function(){
+                    display.setAttribute("transform","translate(" + String(1123 - i * 6) + ",83)")},i * 21.875);
+                tweenlist[1].push(tweening);
+            }
+        },delayTime);
+        tweenlist[0].push(timeout);
+    })
+})
+</script>
+</body>
+</html>
