@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>EAL Train Details</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8" />
+<style>
+html{font-family:sans-serif;background-color:#222;color:white;margin:0;padding:0}
+.title{border-bottom:1px solid grey;width:100%;padding:5px 0;cursor:pointer}
+.col1{display:inline-block;width:12.5%}
+.col2{display:inline-block;width:20%}
+.col3{display:inline-block;width:25%}
+.col4{display:inline-block;width:35%}
+
+.desc{display:none}
+.load{width:18px;padding:2px;margin:2px;display:inline-block;text-align:center}
+.car1{border-radius:12px 0 0 0;width:22px}
+.car9{border-radius:0 12px 0 0;width:22px}
+.red{border:2px solid red}
+.yellow{border:2px solid gold}
+.green{border:2px solid limegreen}
+li{padding:2px 0}
+button{width:100%;padding:5px 0;background-color:lightblue;border:none;cursor:pointer;outline:none}
+</style>
+</head>
+<body>
+<div id="main"></div>
+<button id="refresh" onclick="refresh()"></button>
+<script>
+const data = [
+{
+    "trainId": "081",
+    "nextStationCode": "2", // Next station code
+    "destinationStationCode": "21", // Dest station code
+    "listCars": [
+        {"carLoad": 0,"carName": "1"},
+        {"carLoad": 1,"carName": "2"},
+        {"carLoad": 2,"carName": "3"},
+        {"carLoad": 0,"carName": "4"},
+        {"carLoad": 2,"carName": "5"},
+        {"carLoad": 2,"carName": "6"},
+        {"carLoad": 1,"carName": "7"},
+        {"carLoad": 0,"carName": "8"},
+        {"carLoad": 0,"carName": "9"}
+    ],
+    "receivedTime": 1670086701284, // Data sent time
+    "doorStatus": "0", // Door status
+    "td": "YM0446", // Run number
+    "targetDistance": "249", // Distance to next station
+  },]
+const stn = {
+    '1':'紅磡',
+    '2':'旺角東',
+    '3': '九龍塘',
+    '4': '大圍',
+    '5': '沙田',
+    '6': '火炭',
+    '7': '馬場',
+    '8': '大學',
+    '9': '大埔墟',
+    '10':'太和',
+    '11':'粉嶺',
+    '12':'上水',
+    '13':'羅湖',
+    '14':'落馬洲',
+    '21':'紅磡',
+    '22':'會展',
+    '23':'金鐘',
+    '91':'車廠',
+    '92':'車廠',
+    '81':'測試',
+    '82':'測試'
+}
+
+var refreshBtn = document.getElementById("refresh");
+var parent = document.getElementById("main");
+function addZero(num){
+    if (num < 10) {return "0" + String(num)}
+    else {return String(num)}
+}
+
+function refresh(){
+    parent.innerHTML = "";
+    fetch("https://d30c8uozaghdca.cloudfront.net").then(response => response.json()).then(function(data){
+        data.forEach(function(value,index){
+            let dest = stn[value.destinationStationCode] || "&nbsp;-&nbsp;";
+            let next = stn[value.nextStationCode] || "&nbsp;-&nbsp;";
+            let title = document.createElement("div");
+            title.classList.add("title");
+            title.id = "D" + value.trainId + "_title";
+            if (value.td.length == 6) { title.innerHTML = '<span class="col1">D' + value.trainId + '</span><span class="col2">' + value.td + '</span><span class="col3">往' + dest + '</span><span class="col4">下一站：' + next + '</span>';}
+            else title.innerHTML = '<span class="col1">D' + value.trainId + '</span><span class="col2">-</span><span class="col3">往' + dest + '</span><span class="col4">下一站：' + next + '</span>';
+            document.body.appendChild(title);
+            let desc = document.createElement("ul");
+            desc.classList.add("desc");
+            desc.id = "D" + value.trainId + "_desc";
+            desc.innerHTML = '<li>列車和' + next + '之間距離：' + value.targetDistance + '米</li>';
+            if (value.doorStatus == 1) {desc.innerHTML = desc.innerHTML + "<li>車門已打開</li>";}
+            else {desc.innerHTML = desc.innerHTML + "<li>車門已關閉</li>";}
+            let carstatus = document.createElement("li");
+            carstatus.innerHTML = "車卡擁擠程度<br>";
+            for (let i = 1; i <= 9; i++) {
+                switch (value.listCars[i-1].carLoad) {
+                    case 0:carstatus.innerHTML = carstatus.innerHTML + '<span class="load car' + i + ' green">' + i + '</span>';break;
+                    case 1:carstatus.innerHTML = carstatus.innerHTML + '<span class="load car' + i + ' yellow">' + i + '</span>';break;
+                    case 2:carstatus.innerHTML = carstatus.innerHTML + '<span class="load car' + i + ' red">' + i + '</span>';break;
+                }
+            }
+            desc.appendChild(carstatus);
+            document.body.appendChild(desc);
+            title.addEventListener("click",function(){
+                if (desc.style.display != "block") desc.style.display = "block";
+                else desc.style.display = "none";
+            })
+        })
+        for (let i = 0; i < 37; i++){
+            let id = "D"+("00" + String(i*3+3)).substr(-3,3);
+            let title = document.getElementById(id + "_title");
+            if (title) {
+                parent.appendChild(title);
+                parent.appendChild(document.getElementById(id + "_desc"));
+            }
+        }
+        let time = new Date();
+        let date = [time.getUTCFullYear(),time.getUTCMonth()+1,time.getUTCDate(),time.getUTCHours()+8,time.getUTCMinutes(),time.getUTCSeconds()];
+        if (date[3] > 24) date[3] = date[3] -24;
+        refreshBtn.innerHTML = "更新時間：" + date[0] + "-" + addZero(date[1]) + "-" + addZero(date[2]) + " " + addZero(date[3]) + ":" + addZero(date[4]) + ":" + addZero(date[5]);
+    })
+}
+refresh();
+</script>
+</body>
+</html>
