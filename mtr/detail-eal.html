@@ -100,9 +100,8 @@ function refresh(){
             let desc = document.createElement("ul");
             desc.classList.add("desc");
             desc.id = "D" + value.trainId + "_desc";
-            desc.innerHTML = '<li>列車和' + next + '之間距離：' + value.targetDistance + '米</li>';
-            if (value.doorStatus == 1) {desc.innerHTML = desc.innerHTML + "<li>車門已打開</li>";}
-            else {desc.innerHTML = desc.innerHTML + "<li>車門已關閉</li>";}
+            if (value.doorStatus == 0) {desc.innerHTML = "<li>車門已打開</li>";}
+            else {desc.innerHTML = '<li>列車和' + next + '之間距離：' + value.targetDistance + '米</li>';}
             let carstatus = document.createElement("li");
             carstatus.innerHTML = "車卡擁擠程度<br>";
             for (let i = 1; i <= 9; i++) {
