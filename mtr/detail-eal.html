@@ -79,6 +79,12 @@ function addZero(num){
     else {return String(num)}
 }
 
+function convertTime(obj) {
+    let date = [obj.getUTCFullYear(),obj.getUTCMonth()+1,obj.getUTCDate(),obj.getUTCHours()+8,obj.getUTCMinutes(),obj.getUTCSeconds()];
+    if (date[3] > 24) date[3] = date[3] -24;
+    return ("更新時間：" + date[0] + "-" + addZero(date[1]) + "-" + addZero(date[2]) + " " + addZero(date[3]) + ":" + addZero(date[4]) + ":" + addZero(date[5]));
+}
+
 function refresh(){
     parent.innerHTML = "";
     fetch("https://d30c8uozaghdca.cloudfront.net").then(response => response.json()).then(function(data){
@@ -100,13 +106,20 @@ function refresh(){
             let carstatus = document.createElement("li");
             carstatus.innerHTML = "車卡擁擠程度<br>";
             for (let i = 1; i <= 9; i++) {
-                switch (value.listCars[i-1].carLoad) {
-                    case 0:carstatus.innerHTML = carstatus.innerHTML + '<span class="load car' + i + ' green">' + i + '</span>';break;
-                    case 1:carstatus.innerHTML = carstatus.innerHTML + '<span class="load car' + i + ' yellow">' + i + '</span>';break;
-                    case 2:carstatus.innerHTML = carstatus.innerHTML + '<span class="load car' + i + ' red">' + i + '</span>';break;
+                let info = i;
+                if (i == 1) {info = "N"} else if (i == 4) {info = "F"} else if (i == 9) {info = "S"}
+                if (i == 4) {
+                    if (value.listCars[3].passengerCount < 70) {carstatus.innerHTML += '<span class="load car' + i + ' green">' + info + '</span>'}
+                    else if (value.listCars[3].passengerCount < 150) {carstatus.innerHTML += '<span class="load car' + i + ' yellow">' + info + '</span>'}
+                    else {carstatus.innerHTML += '<span class="load car' + i + ' red">' + info + '</span>'}
+                } else {
+                    if (value.listCars[i-1].passengerCount < 110) {carstatus.innerHTML += '<span class="load car' + i + ' green">' + info + '</span>'}
+                    else if (value.listCars[i-1].passengerCount < 250) {carstatus.innerHTML += '<span class="load car' + i + ' yellow">' + info + '</span>'}
+                    else {carstatus.innerHTML += '<span class="load car' + i + ' red">' + info + '</span>'}
                 }
             }
             desc.appendChild(carstatus);
+            desc.innerHTML = desc.innerHTML + '<li>' + convertTime(new Date(value.receivedTime)) + '</li>';
             document.body.appendChild(desc);
             title.addEventListener("click",function(){
                 if (desc.style.display != "block") desc.style.display = "block";
@@ -121,10 +134,7 @@ function refresh(){
                 parent.appendChild(document.getElementById(id + "_desc"));
             }
         }
-        let time = new Date();
-        let date = [time.getUTCFullYear(),time.getUTCMonth()+1,time.getUTCDate(),time.getUTCHours()+8,time.getUTCMinutes(),time.getUTCSeconds()];
-        if (date[3] > 24) date[3] = date[3] -24;
-        refreshBtn.innerHTML = "更新時間：" + date[0] + "-" + addZero(date[1]) + "-" + addZero(date[2]) + " " + addZero(date[3]) + ":" + addZero(date[4]) + ":" + addZero(date[5]);
+        refreshBtn.innerHTML = convertTime(new Date());
     })
 }
 refresh();
