@@ -1,0 +1,152 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>KTL Train Details</title>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8" />
+<style>
+html{font-family:sans-serif;background-color:#222;color:white;margin:0;padding:0}
+.title{border-bottom:1px solid grey;width:100%;padding:5px 0;cursor:pointer}
+.col1{display:inline-block;width:12.5%}
+.col2{display:inline-block;width:20%}
+.col3{display:inline-block;width:25%}
+.col4{display:inline-block;width:35%}
+
+.desc{display:none}
+.load{width:18px;padding:2px;margin:2px;display:inline-block;text-align:center}
+.car1{border-radius:12px 0 0 0;width:22px}
+.car8{border-radius:0 12px 0 0;width:22px}
+.red{border:2px solid red}
+.yellow{border:2px solid gold}
+.green{border:2px solid limegreen}
+li{padding:2px 0}
+button{width:100%;padding:5px 0;background-color:lightblue;border:none;cursor:pointer;outline:none}
+</style>
+</head>
+<body>
+<div id="main">
+<div class="title"><span class="col1">A351-A352 (C-Train)</span><span class="col2">018</span><span class="col4">NTK > KOB</span></div>
+</div>
+<button id="refresh" onclick="refresh()"></button>
+<script>
+const stn = {
+    '7':'KET',
+    '8':'HKU',
+	'9':'SYP',
+	'10':'SHW',
+	'11':'CEN',
+	'12':'ADM',
+	'13':'WAC',
+	'14':'CAB',
+	'15':'TIH',
+	'16':'FOH',
+	'17':'NOP',
+	'18':'QUB',
+	'19':'TAK',
+	'20':'SWH',
+	'21':'SKW',
+	'22':'HFC',
+	'23':'CHW',
+	'30':'TSW',
+	'31':'TWH',
+	'32':'KWH',
+	'33':'KWF',
+	'34':'LAK',
+	'35':'MEF',
+	'36':'LCK',
+	'37':'CSW',
+	'38':'SSP',
+	'39':'PRE',
+	'40':'MOK',
+	'41':'YMT',
+	'42':'JOR',
+	'43':'TST',
+	'52':'LAT',
+	'53':'KWT',
+	'54':'NTK',
+	'55':'KOB',
+	'56':'CHH',
+	'57':'DIH',
+	'58':'WTS',
+	'59':'LOF',
+	'60':'KOT',
+	'61':'SKM',
+	'65':'HOM',
+	'66':'WHA',
+	'81':'LHP',
+	'82':'POA',
+	'83':'HAH',
+	'84':'TKO',
+	'85':'TIK',
+	'86':'YAT',
+	'99':'DPT'
+}
+
+var refreshBtn = document.getElementById("refresh");
+var parent = document.getElementById("main");
+function addZero(num){
+    if (num < 10) {return "0" + String(num)}
+    else {return String(num)}
+}
+
+function convertTime(obj) {
+    let date = [obj.getUTCFullYear(),obj.getUTCMonth()+1,obj.getUTCDate(),obj.getUTCHours()+8,obj.getUTCMinutes(),obj.getUTCSeconds()];
+    if (date[3] >= 24) date[3] = date[3] -24;
+    return ("Last updated at " + date[0] + "-" + addZero(date[1]) + "-" + addZero(date[2]) + " " + addZero(date[3]) + ":" + addZero(date[4]) + ":" + addZero(date[5]));
+}
+
+function refresh(){
+    parent.innerHTML = "";
+    fetch("https://3nx7c25ob6.execute-api.ap-east-1.amazonaws.com/trainLoads").then(response => response.json()).then(function(data){
+        refreshBtn.innerHTML = convertTime(new Date());
+        data.forEach(function(value,index){
+            let title = document.createElement("div");
+            title.id = value.trainId.replaceAll("-","") + "_title";
+            title.classList.add("title");
+            document.body.appendChild(title);
+            title.innerHTML = "<span class='col3'>" + value.trainId.replaceAll("-","") + " (" + value.line + " " + value.trainType.slice(0,1) + ")</span>";
+            if (value.td != "NA") {
+                title.innerHTML += "<span class='col2'>" + ("0" + value.td).slice(-3) + "</span>";
+            } else {
+                title.innerHTML += "<span class='col2'>NA</span>";
+            }
+            title.innerHTML += "<span class='col4'>" + value.currentStationCode + " > " + value.nextStationCode + " --> " + value.destinationStationCode + "</span>";
+
+            let desc = document.createElement("ul");
+            desc.classList.add("desc");
+            desc.id = value.trainId.replaceAll("-","") + "_desc";
+            document.body.appendChild(desc);
+            if (value.jsonContent.distanceFromCurrentStation != "-") {
+                let dist = document.createElement("li");
+                dist.innerHTML = "Distance from " + value.currentStationCode + " is " + value.jsonContent.distanceFromCurrentStation + "m";
+                desc.appendChild(dist);
+            }
+            let carstatus = document.createElement("li");
+            carstatus.innerHTML = "Car load status:<br>";
+            desc.appendChild(carstatus);
+            for (let i = 1; i <= 8; i++) {
+                let info = i;
+                if (value.carLoads[i-1].passengerCount == 0 || value.carLoads[i-1].passengerCount == 1) {carstatus.innerHTML += '<span class="load car' + i + ' green">' + info + '</span>'}
+                else if (value.carLoads[i-1].passengerCount == 2 || value.carLoads[i-1].passengerCount == 3) {carstatus.innerHTML += '<span class="load car' + i + ' yellow">' + info + '</span>'}
+                else {carstatus.innerHTML += '<span class="load car' + i + ' red">' + info + '</span>'}
+            }
+            desc.innerHTML += '<li>' + convertTime(new Date(value.ttl * 1000)) + '</li>';
+            title.addEventListener("click",function(){
+                if (desc.style.display != "block") desc.style.display = "block";
+                else desc.style.display = "none";
+            })
+        })
+        for (let i = 351; i <= 799; i++){
+            let id = "A" + String(i);
+            let title = document.getElementById(id + "_title");
+            if (title) {
+                parent.appendChild(title);
+                parent.appendChild(document.getElementById(id + "_desc"));
+            }
+        }
+    })
+}
+refresh();
+</script>
+</body>
+</html>
