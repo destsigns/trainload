@@ -1,32 +1,35 @@
 <!DOCTYPE html>
 <html>
 <head>
-<title>EAL Train Details</title>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta charset="utf-8" />
 <style>
-html{font-family:sans-serif;background-color:#222;color:white;margin:0;padding:0}
+html{margin:0;padding:0}
+body{font-family:sans-serif;background-color:white;color:white;font-size:12px;margin:5px}
 .title{border-bottom:1px solid grey;width:100%;padding:5px 0;cursor:pointer}
-.col1{display:inline-block;width:12.5%}
-.col2{display:inline-block;width:20%}
-.col3{display:inline-block;width:25%}
-.col4{display:inline-block;width:35%}
+.col1{display:inline-block;width:11%}
+.col2{display:inline-block;width:16%}
+.col3{display:inline-block;width:45%}
+.col4{display:inline-block;width:23%}
 
 .desc{display:none}
-.load{width:18px;padding:2px;margin:2px;display:inline-block;text-align:center}
-.car1{border-radius:12px 0 0 0;width:22px}
-.car9{border-radius:0 12px 0 0;width:22px}
+.load{width:15px;padding:1.5px;margin:1.5px;display:inline-block;text-align:center}
+.car1{border-radius:12px 0 0 0;width:33px}
+.car9{border-radius:0 12px 0 0;width:33px}
 .red{border:2px solid red}
 .yellow{border:2px solid gold}
 .green{border:2px solid limegreen}
 li{padding:2px 0}
 button{width:100%;padding:5px 0;background-color:lightblue;border:none;cursor:pointer;outline:none}
+#main{display:none; margin-top:26px}
+.u{text-decoration:underline}
+#refresh{position:fixed;top:0;display:none}
 </style>
 </head>
 <body>
-<div id="main"></div>
 <button id="refresh" onclick="refresh()"></button>
-<script>
+<div id="main"></div>
+<script id="start">
 const data = [
 {
     "trainId": "081",
@@ -49,64 +52,157 @@ const data = [
     "targetDistance": "249", // Distance to next station
   },]
 const stn = {
-    '1':'紅磡',
-    '2':'旺角東',
-    '3': '九龍塘',
-    '4': '大圍',
-    '5': '沙田',
-    '6': '火炭',
-    '7': '馬場',
-    '8': '大學',
-    '9': '大埔墟',
-    '10':'太和',
-    '11':'粉嶺',
-    '12':'上水',
-    '13':'羅湖',
-    '14':'落馬洲',
-    '21':'紅磡',
-    '22':'會展',
-    '23':'金鐘',
-    '91':'車廠',
-    '92':'車廠',
-    '81':'測試',
-    '82':'測試'
+    '1':'HUH',
+    '2':'MKK',
+    '3': 'KOT',
+    '4': 'TAW',
+    '5': 'SHT',
+    '6': 'FOT',
+    '7': 'RAC',
+    '8': 'UNI',
+    '9': 'TAP',
+    '10':'TWO',
+    '11':'FAN',
+    '12':'SHS',
+    '13':'LOW',
+    '14':'LMC',
+    '21':'NHUH',
+    '22':'EXC',
+    '23':'ADM',
+    '91':'DPT',
+    '92':'DPT',
+    '81':'TEST',
+    '82':'TEST',
+
+    '0':'?',
+    '24':'ADM rev',
+    '241':'ADM SDG',
+    '701':'HTD',
+    '15':'SHS SDG',
+    '16':'SHS SDG',
+    '151':'SHS SDG',
+    '161':'SHS SDG',
 }
 
-var refreshBtn = document.getElementById("refresh");
-var parent = document.getElementById("main");
+const dest = { // Letter: [dest in chi, via rac],
+    "A":["SHT", false],
+    "B":["LMC", true],
+    "C":["FOT", false],
+    "D":["TAP", false],
+    "E":["MKK", false],
+    "G":["TAP", true],
+    "H":["SHS", false],
+    "J":["ADM", false],
+    "K":["SHS", true],
+    "L":["LMC", false],
+    "M":["LOW", false],
+    "N":["LOW", true],
+    "R":["RAC", false],
+    "Y":["HUH", false],
+}
+const refreshBtn = document.getElementById("refresh");
+const parent = document.getElementById("main");
+const n = '\x4d\x6a\x63\x33';
+
+if (btoa(localStorage.pw) == n) {
+    parent.style.display = "block";
+    refreshBtn.style.display = "block";
+    document.body.style.backgroundColor = "#222";
+    const title = document.createElement("title");
+    title.innerHTML = "EAL Train Details";
+    document.head.appendChild(title);
+    refresh();
+} else {
+    document.head.innerHTML = "";
+    document.body.innerHTML = "Access denied";
+}
+
 function addZero(num){
     if (num < 10) {return "0" + String(num)}
     else {return String(num)}
 }
 
-function convertTime(obj) {
-    let date = [obj.getUTCFullYear(),obj.getUTCMonth()+1,obj.getUTCDate(),obj.getUTCHours()+8,obj.getUTCMinutes(),obj.getUTCSeconds()];
-    if (date[3] > 24) date[3] = date[3] -24;
-    return ("更新時間：" + date[0] + "-" + addZero(date[1]) + "-" + addZero(date[2]) + " " + addZero(date[3]) + ":" + addZero(date[4]) + ":" + addZero(date[5]));
+function convertTime(epoch) {
+    const date = new Date(epoch);
+    return ("Last updated at " + date.getFullYear() + "-" + addZero(date.getMonth()+1) + "-" + addZero(date.getDate())
+     + " " + addZero(date.getHours()) + ":" + addZero(date.getMinutes()) + ":" + addZero(date.getSeconds()));
+}
+
+function numToAbbrev(code_num, arr) {
+    if (arr == "stn" && stn[code_num]) {
+        return stn[code_num];
+    } else if (arr == "dest" && dest[code_num]) {
+        return dest[code_num];
+    } else if (arr == "dest" || code_num == 0 || code_num == -1) {
+        return "-";
+    } else if (arr == "stn") {
+        return "- (" + code_num +")";
+    }
+}
+
+function tdToDesc(td) {
+    var final = "";
+    var num = Number(td.slice(2,6));
+    var dir_up = true;
+    if (num != null && num % 2 == 0) {
+        dir_up = false;
+    }
+    if (td.slice(0,2) == "VV") {
+        final = final + "Diesel/Loco";
+    } else {
+        var origin = numToAbbrev(td.slice(0,1),"dest");
+        var dest = numToAbbrev(td.slice(1,2),"dest");
+        var via_rac = false;
+        if (origin != null && dest != null && origin != "-" && dest != "-") {
+            if (dir_up) {
+                final = final + origin[0] + " > " + dest[0];
+            } else {
+                final = final + dest[0] + " > " + origin[0];
+            }
+            via_rac = (origin[1] || dest[1]);
+            if (via_rac) {
+                final = final + " (RAC)";
+            }
+        } else {
+            final = "404";
+        }
+    }
+    return final;
 }
 
 function refresh(){
     parent.innerHTML = "";
     fetch("https://d30c8uozaghdca.cloudfront.net").then(response => response.json()).then(function(data){
         data.forEach(function(value,index){
-            let dest = stn[value.destinationStationCode] || "&nbsp;-&nbsp;";
-            let next = stn[value.nextStationCode] || "&nbsp;-&nbsp;";
+            let dest = numToAbbrev(value.destinationStationCode,"stn");
+            let prev = numToAbbrev(value.currentStationCode,"stn");
+            let next = numToAbbrev(value.nextStationCode,"stn");
             let title = document.createElement("div");
             title.classList.add("title");
             title.id = "D" + value.trainId + "_title";
-            if (value.td.length == 6) { title.innerHTML = '<span class="col1">D' + value.trainId + '</span><span class="col2">' + value.td + '</span><span class="col3">往' + dest + '</span><span class="col4">下一站：' + next + '</span>';}
-            else title.innerHTML = '<span class="col1">D' + value.trainId + '</span><span class="col2">-</span><span class="col3">往' + dest + '</span><span class="col4">下一站：' + next + '</span>';
+            if (value.td == "UNKNOWN") {
+                value.td = "-";
+            }
+            const tdDesc = tdToDesc(value.td);
+            if (tdDesc != "404") {
+                title.innerHTML = '<span class="col1">D' + value.trainId + '</span><span class="col2">' + value.td + '</span><span class="col3">Route: ' + tdDesc + '</span><span class="col4">' + prev + " > " + next + '</span>';
+            } else if (dest != "-") {
+                title.innerHTML = '<span class="col1">D' + value.trainId + '</span><span class="col2">' + value.td + '</span><span class="col3">Dest: ' + dest + '</span><span class="col4">' + prev + " > " + next + '</span>';
+            } else {
+                title.innerHTML = '<span class="col1">D' + value.trainId + '</span><span class="col2">' + value.td + '</span><span class="col3">Journey unknown</span><span class="col4">' + prev + " > " + next + '</span>';
+            }
             document.body.appendChild(title);
             let desc = document.createElement("ul");
             desc.classList.add("desc");
             desc.id = "D" + value.trainId + "_desc";
-            if (value.doorStatus == 0) {desc.innerHTML = "<li>車門已打開</li>";}
-            else {desc.innerHTML = '<li>列車和' + next + '之間距離：' + value.targetDistance + '米</li>';}
+            if (value.doorStatus == 0)
+                desc.innerHTML = "<li>Door opened</li>";
+            desc.innerHTML = '<li>' + prev + ' <span class="u">&emsp;&emsp;&emsp;</span> D' + value.trainId + ' <span class="u">&nbsp;&nbsp;' + value.targetDistance + 'm&nbsp;&nbsp;</span> '+ next +'</li>';
             let carstatus = document.createElement("li");
-            carstatus.innerHTML = "車卡擁擠程度<br>";
+            carstatus.innerHTML = "Train load<br>";
             for (let i = 1; i <= 9; i++) {
                 let info = i;
-                if (i == 1) {info = "N"} else if (i == 4) {info = "F"} else if (i == 9) {info = "S"}
+                if (i == 1) {info = "LOW"} else if (i == 4) {info = "F"} else if (i == 9) {info = "ADM"}
                 if (i == 4) {
                     if (value.listCars[3].passengerCount < 70) {carstatus.innerHTML += '<span class="load car' + i + ' green">' + info + '</span>'}
                     else if (value.listCars[3].passengerCount < 150) {carstatus.innerHTML += '<span class="load car' + i + ' yellow">' + info + '</span>'}
@@ -118,7 +214,7 @@ function refresh(){
                 }
             }
             desc.appendChild(carstatus);
-            desc.innerHTML = desc.innerHTML + '<li>' + convertTime(new Date(value.receivedTime)) + '</li>';
+            desc.innerHTML = desc.innerHTML + '<li>' + convertTime(value.receivedTime) + '</li>';
             document.body.appendChild(desc);
             title.addEventListener("click",function(){
                 if (desc.style.display != "block") desc.style.display = "block";
@@ -133,10 +229,9 @@ function refresh(){
                 parent.appendChild(document.getElementById(id + "_desc"));
             }
         }
-        refreshBtn.innerHTML = convertTime(new Date());
+        refreshBtn.innerHTML = "Click to refresh. " + convertTime(Date.now());
     })
 }
-refresh();
 </script>
 </body>
 </html>
