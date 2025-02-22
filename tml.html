@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8" />
+<link rel="stylesheet" href="style.css" />
+<style>
+.col1{display:inline-block;width:12.5%}
+.col2{display:inline-block;width:20%}
+.col3{display:inline-block;width:25%}
+.col4{display:inline-block;width:35%}
+.car8{border-radius:0 12px 0 0;width:33px}
+</style>
+</head>
+<body>
+<button id="refresh" onclick="refresh()"></button>
+<div id="main"></div>
+<div id="temp"></div>
+<script src="startup.js"></script>
+<script>
+const stn = {
+    '1':'HUH',
+    '14':'ETS',
+    '21':'TAW',
+    '22':'CKT',
+    '23':'STW',
+    '24':'CIO',
+    '25':'SHM',
+    '26':'TSH',
+    '27':'HEO',
+    '28':'MOS',
+    '29':'WKS',
+    '41':'NAC',
+    '42':'MEF',
+    '43':'TWW',
+    '44':'KSR',
+    '45':'YUL',
+    '46':'LOP',
+    '47':'TIS',
+    '48':'SIH',
+    '49':'TUM',
+    '50':'AUS',
+    '61':'HOM',
+    '62':'TKW',
+    '63':'SUW',
+    '64':'KAT',
+    '65':'DIH',
+    '66':'HIK',
+    '91':'DPT',
+    '92':'NIS',
+    '93':'SPL',
+    '94':'TEST',
+    '95':'WR',
+    '97':'MOSR',
+}
+
+const refreshBtn = document.getElementById("refresh");
+const parent = document.getElementById("main");
+const temp = document.getElementById("temp");
+const login = authenticate();
+
+if (login) {
+    parent.style.display = "block";
+    refreshBtn.style.display = "block";
+    document.body.style.backgroundColor = "#222";
+    const title = document.createElement("title");
+    title.innerHTML = "TML Train Details";
+    document.head.appendChild(title);
+    refresh();
+} else {
+    document.head.innerHTML = "";
+    document.body.innerHTML = "Access denied";
+}
+
+function numToAbbrev(code_num, arr) {
+    if (arr == "stn" && stn[code_num]) {
+        return stn[code_num];
+    } else if (arr == "dest" && dest[code_num]) {
+        return dest[code_num];
+    } else if (arr == "dest" || code_num == 0 || code_num == -1) {
+        return "-";
+    } else if (arr == "stn") {
+        return "- (" + code_num +")";
+    }
+}
+function refresh(){
+    parent.innerHTML = "";
+    fetch("https://8e304x2wjg.execute-api.ap-east-1.amazonaws.com/test/obcs-data-exchanges", {
+    method: 'GET',
+    mode: 'cors',
+    cache: 'no-cache',
+    credentials: 'omit',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': 'QkmjCRYvXt6o89UdZAvoXa49543NxOtU2tBhQQDQ'
+    },
+    redirect: 'follow',
+    referrerPolicy: 'no-referrer',
+  }).then(response => response.json()).then(function(data){
+        refreshBtn.innerHTML = convertTime(new Date());
+        data.Items.forEach(function(value,index){
+            let dest = numToAbbrev(value.destinationStationCode,"stn");
+            let prev = numToAbbrev(value.currentStationCode,"stn");
+            let next = numToAbbrev(value.nextStationCode,"stn");
+
+            if (value.train_type != undefined) {
+                let title = document.createElement("div");
+                title.classList.add("title");
+                title.id = "D" + value.trainId + "_title";
+                title.innerHTML = '<span class="col1">D' + value.trainId + '</span><span class="col2">' + value.train_type + '</span><span class="col3">Dest: ' + dest + '</span><span class="col4">' + prev + " &gt; " + next + '</span>';
+                temp.appendChild(title);
+                let desc = document.createElement("ul");
+                desc.classList.add("desc");
+                desc.id = "D" + value.trainId + "_desc";
+                if (value.isDoorOpen == true) {desc.innerHTML = "<li>Door opened</li>";}
+                desc.innerHTML = '<li>' + prev + ' <span class="u">&nbsp;&nbsp;' + value.distanceFromCurrentStation + 'm&nbsp;&nbsp;</span> D' + value.trainId + ' <span class="u">&emsp;&emsp;&emsp;</span> '+ next +'</li>';
+                let carstatus = document.createElement("li");
+                carstatus.innerHTML = "Train load<br>";
+                for (let i = 1; i <= 8; i++) {
+                    let info = i;
+                    if (i == 1) {info = "TUM"} else if (i == 8) {info = "WKS"}
+                    if (i == 4) {
+                        if (value.listCars[3].passengerCount < 70) {carstatus.innerHTML += '<span class="load car' + i + ' green">' + info + '</span>'}
+                        else if (value.listCars[3].passengerCount < 150) {carstatus.innerHTML += '<span class="load car' + i + ' yellow">' + info + '</span>'}
+                        else {carstatus.innerHTML += '<span class="load car' + i + ' red">' + info + '</span>'}
+                    } else {
+                        if (value.listCars[i-1].passengerCount < 110) {carstatus.innerHTML += '<span class="load car' + i + ' green">' + info + '</span>'}
+                        else if (value.listCars[i-1].passengerCount < 250) {carstatus.innerHTML += '<span class="load car' + i + ' yellow">' + info + '</span>'}
+                        else {carstatus.innerHTML += '<span class="load car' + i + ' red">' + info + '</span>'}
+                    }
+                }
+                desc.appendChild(carstatus);
+                desc.innerHTML = desc.innerHTML + '<li>' + convertTime(new Date(value.receivedTime)) + '</li>';
+                temp.appendChild(desc);
+                title.addEventListener("click",function(){
+                    if (desc.style.display != "block") desc.style.display = "block";
+                    else desc.style.display = "none";
+                })
+            }
+            })
+            for (let i = 302; i <= 432; i++){
+                let id = "D" + String(i);
+                let title = document.getElementById(id + "_title");
+                if (title) {
+                    parent.appendChild(title);
+                    parent.appendChild(document.getElementById(id + "_desc"));
+                }
+            }
+            temp.innerHTML = "";
+            refreshBtn.innerHTML = "Click to refresh. " + convertTime(Date.now());
+        })
+}
+refresh();
+</script>
+</body>
+</html>

@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<meta charset="utf-8" />
+<link rel="stylesheet" href="style.css" />
+<style>
+.car8{border-radius:0 12px 0 0;width:33px}
+.col1{width:28%}
+.col2{width:12%}
+.col3{width:40%}
+.legend{border-radius:50%;width:12px;height:12px;display:inline-block;margin:0 5px}
+</style>
+</head>
+<body>
+<button id="refresh" onclick="refresh()"></button>
+<div id="main"></div>
+<div id="temp"></div>
+<script src="startup.js"></script>
+<script id="start">
+const stn = {
+    '7':'KET',
+    '8':'HKU',
+	'9':'SYP',
+	'10':'SHW',
+	'11':'CEN',
+	'12':'ADM',
+	'13':'WAC',
+	'14':'CAB',
+	'15':'TIH',
+	'16':'FOH',
+	'17':'NOP',
+	'18':'QUB',
+	'19':'TAK',
+	'20':'SWH',
+	'21':'SKW',
+	'22':'HFC',
+	'23':'CHW',
+	'30':'TSW',
+	'31':'TWH',
+	'32':'KWH',
+	'33':'KWF',
+	'34':'LAK',
+	'35':'MEF',
+	'36':'LCK',
+	'37':'CSW',
+	'38':'SSP',
+	'39':'PRE',
+	'40':'MOK',
+	'41':'YMT',
+	'42':'JOR',
+	'43':'TST',
+	'52':'LAT',
+	'53':'KWT',
+	'54':'NTK',
+	'55':'KOB',
+	'56':'CHH',
+	'57':'DIH',
+	'58':'WTS',
+	'59':'LOF',
+	'60':'KOT',
+	'61':'SKM',
+	'65':'HOM',
+	'66':'WHA',
+	'81':'LHP',
+	'82':'POA',
+	'83':'HAH',
+	'84':'TKO',
+	'85':'TIK',
+	'86':'YAT',
+	'99':'DPT'
+}
+
+const refreshBtn = document.getElementById("refresh");
+const parent = document.getElementById("main");
+const temp = document.getElementById("temp");
+const login = authenticate();
+
+if (login) {
+    parent.style.display = "block";
+    refreshBtn.style.display = "block";
+    document.body.style.backgroundColor = "#222";
+    const title = document.createElement("title");
+    title.innerHTML = "KTL Train Details";
+    document.head.appendChild(title);
+    refresh();
+} else {
+    document.head.innerHTML = "";
+    document.body.innerHTML = "Access denied";
+}
+
+function refresh(){
+    parent.innerHTML = "";
+    temp.innerHTML = "";
+    fetch("https://3nx7c25ob6.execute-api.ap-east-1.amazonaws.com/trainLoads").then(response => response.json()).then(function(data){
+        refreshBtn.innerHTML = convertTime(new Date());
+        data.forEach(function(value,index){
+            let title = document.createElement("div");
+            title.id = value.trainId.replaceAll("-","") + "_title";
+            title.classList.add("title");
+            temp.appendChild(title);
+            if (value.line != "") {
+                title.innerHTML = "<span class='" + value.line.toLowerCase() + " legend'></span><span class='col1'>" + value.trainId.replaceAll("-","") + " (" + value.trainType.slice(0,1) + ")</span>";
+                if (value.td != "NA" || value.td != undefined) {
+                    title.innerHTML += "<span class='col2'>" + ("0" + value.td).slice(-3) + "</span>";
+                } else {
+                    title.innerHTML += "<span class='col2'>NA</span>";
+                }
+                title.innerHTML += "<span class='col3'>" + value.currentStationCode + " > " + value.nextStationCode + " --> " + value.destinationStationCode + "</span>";
+            } else {
+                title.innerHTML = "<span class='nis legend'></span><span class='col1'>" + value.trainId.replaceAll("-","") + " (" + value.trainType.slice(0,1) + ")</span>";
+            }
+            let desc = document.createElement("ul");
+            desc.classList.add("desc");
+            desc.id = value.trainId.replaceAll("-","") + "_desc";
+            temp.appendChild(desc);
+            if (value.jsonContent.distanceFromCurrentStation != "-" && value.jsonContent.distanceFromCurrentStation != undefined) {
+                let dist = document.createElement("li");
+                dist.innerHTML = "Distance from " + value.currentStationCode + " is " + value.jsonContent.distanceFromCurrentStation + "m";
+                desc.appendChild(dist);
+            }
+            let carstatus = document.createElement("li");
+            carstatus.innerHTML = "Car load status:<br>";
+            desc.appendChild(carstatus);
+            for (let i = 1; i <= 8; i++) {
+                let info = i;
+                if (i == 1) {info = "WHA"}
+                else if (i == 8) {info = "TIK"}
+                if (value.carLoads[i-1].passengerCount == 0 || value.carLoads[i-1].passengerCount == 1) {carstatus.innerHTML += '<span class="load car' + i + ' green">' + info + '</span>'}
+                else if (value.carLoads[i-1].passengerCount == 2 || value.carLoads[i-1].passengerCount == 3) {carstatus.innerHTML += '<span class="load car' + i + ' yellow">' + info + '</span>'}
+                else {carstatus.innerHTML += '<span class="load car' + i + ' red">' + info + '</span>'}
+            }
+            desc.innerHTML += '<li>' + convertTime(new Date(value.ttl * 1000)) + '</li>';
+            title.addEventListener("click",function(){
+                if (desc.style.display != "block") desc.style.display = "block";
+                else desc.style.display = "none";
+            })
+        })
+        for (let i = 191; i <= 799; i++){
+            let id = "A" + String(i);
+            let title = document.getElementById(id + "_title");
+            if (title) {
+                parent.appendChild(title);
+                parent.appendChild(document.getElementById(id + "_desc"));
+            }
+        }
+        temp.innerHTML = "";
+    })
+}
+refresh();
+</script>
+</body>
+</html>

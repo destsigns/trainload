@@ -3,54 +3,16 @@
 <head>
 <meta name="viewport" content="width=device-width,initial-scale=1" />
 <meta charset="utf-8" />
+<link rel="stylesheet" href="style.css" />
 <style>
-html{margin:0;padding:0}
-body{font-family:sans-serif;background-color:white;color:white;font-size:12px;margin:5px}
-.title{border-bottom:1px solid grey;width:100%;padding:5px 0;cursor:pointer}
-.col1{display:inline-block;width:11%}
-.col2{display:inline-block;width:16%}
-.col3{display:inline-block;width:45%}
-.col4{display:inline-block;width:23%}
-
-.desc{display:none}
-.load{width:15px;padding:1.5px;margin:1.5px;display:inline-block;text-align:center}
-.car1{border-radius:12px 0 0 0;width:33px}
 .car9{border-radius:0 12px 0 0;width:33px}
-.red{border:2px solid red}
-.yellow{border:2px solid gold}
-.green{border:2px solid limegreen}
-li{padding:2px 0}
-button{width:100%;padding:5px 0;background-color:lightblue;border:none;cursor:pointer;outline:none}
-#main{display:none; margin-top:26px}
-.u{text-decoration:underline}
-#refresh{position:fixed;top:0;display:none}
 </style>
 </head>
 <body>
 <button id="refresh" onclick="refresh()"></button>
 <div id="main"></div>
+<script src="startup.js"></script>
 <script id="start">
-const data = [
-{
-    "trainId": "081",
-    "nextStationCode": "2", // Next station code
-    "destinationStationCode": "21", // Dest station code
-    "listCars": [
-        {"carLoad": 0,"carName": "1"},
-        {"carLoad": 1,"carName": "2"},
-        {"carLoad": 2,"carName": "3"},
-        {"carLoad": 0,"carName": "4"},
-        {"carLoad": 2,"carName": "5"},
-        {"carLoad": 2,"carName": "6"},
-        {"carLoad": 1,"carName": "7"},
-        {"carLoad": 0,"carName": "8"},
-        {"carLoad": 0,"carName": "9"}
-    ],
-    "receivedTime": 1670086701284, // Data sent time
-    "doorStatus": "0", // Door status
-    "td": "YM0446", // Run number
-    "targetDistance": "249", // Distance to next station
-  },]
 const stn = {
     '1':'HUH',
     '2':'MKK',
@@ -102,9 +64,10 @@ const dest = { // Letter: [dest in chi, via rac],
 }
 const refreshBtn = document.getElementById("refresh");
 const parent = document.getElementById("main");
-const n = '\x4d\x6a\x63\x33';
 
-if (btoa(localStorage.pw) == n) {
+const login = authenticate();
+
+if (login) {
     parent.style.display = "block";
     refreshBtn.style.display = "block";
     document.body.style.backgroundColor = "#222";
@@ -115,17 +78,6 @@ if (btoa(localStorage.pw) == n) {
 } else {
     document.head.innerHTML = "";
     document.body.innerHTML = "Access denied";
-}
-
-function addZero(num){
-    if (num < 10) {return "0" + String(num)}
-    else {return String(num)}
-}
-
-function convertTime(epoch) {
-    const date = new Date(epoch);
-    return ("Last updated at " + date.getFullYear() + "-" + addZero(date.getMonth()+1) + "-" + addZero(date.getDate())
-     + " " + addZero(date.getHours()) + ":" + addZero(date.getMinutes()) + ":" + addZero(date.getSeconds()));
 }
 
 function numToAbbrev(code_num, arr) {
